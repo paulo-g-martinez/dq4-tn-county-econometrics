@@ -11,13 +11,13 @@ for (f in files) {
   #making a string path to each target file
   d = paste("./data/tax_data", f, sep = "/")
   #reading in each irs xls into the variable created for it
-  assign(v, read.xls(d, stringsAsFactors = FALSE))
+  assign(v, read.xls(d, stringsAsFactors = FALSE, blank.lines.skip = TRUE))
 }
 
 # function to untangle the xls columns names mess the irs gave us
 column_assigner <- function(df) {
-  columns <-c(df[3,]) #column names component from the third forw
-  columns_2 <-c(df[4,]) #column names component from the fourth row
+  columns <- c(df[3,]) #column names component from the third forw
+  columns_2 <- c(df[4,]) #column names component from the fourth row
   
   for (i in 1:length(columns)) { #do this once for each column
     if (i == 1) {
@@ -43,8 +43,68 @@ df13 <- column_assigner(df13)
 df14 <- column_assigner(df14)
 df15 <- column_assigner(df15)
 
+dfs <- list(df11, df12, df14, df15)
+
+#convert columns to their appropriate data types
+#this code asserts that "number" is a good discriminant between the dollar and count columns: str_detect(colnames(df15), "amount") & str_detect(colnames(df15), "number")
+
+irs_cleaner <- function(df) {
+  df2 <- df[!(df$size_of_adjusted_gross_income == "Total" | df$size_of_adjusted_gross_income == ""),]
+  df2[,3:ncol(df2)] = sapply(df2[,3:ncol(df2)], function(x) suppressWarnings(as.numeric(as.character(x))))
+  for (name in names(df2)) {
+    if (grepl("zip", name)) next
+    if (grepl("size_of_adjusted_gross_income", name)) next
+    if (grepl("number", name)) next
+    
+    df2[name] <- df2[name] * 1000
+  }
+  df2
+}
+
+dfs <- lapply(dfs, irs_cleaner)
+
 View(df11)
 View(df12)
 View(df13)
 View(df14)
 View(df15)
+
+#Time to read in the education data frame
+#     I'll also have to clean it
+#     and perhaps organize it
+# Let's just start with Alex's df to simplify our life for now
+ach_profile <- read_csv("data/achievement_profile_data_with_CORE.csv")
+View(ach_profile)
+
+#now let's read in the zip code data frame
+#Commented all this out because reading it in took a while
+'
+tnzips_df <- read.xls("data/zip_code_database.xlsx", dec = ".", blank.lines.skip = T)
+zip_code <- tnzips_df[(tnzips_df["state"] == "TN"),]
+save(zip_code, file = "zip_code.Rda")
+'
+load('zip_code.Rda')
+View(zip_code)
+
+#read in membership dataframe from the education tn.gov website
+membership <- read_csv("data/data_2015_membership_school.csv")
+hs_membership <- membership %>% 
+  filter(
+    grade %in% c(9, 10, 11, 12),
+    race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders")
+View(hs_membership)
+'
+#read in crosswalks because crosswalk's District_number column is the same as ach's system column
+crosswalk <- read.xls('data/data_district_to_county_crosswalk.xls', stringsAsFactors = F, blank.lines.skip = T)
+View(crosswalk)
+
+merged_ed <- merge(ach_profile, crosswalk, by.y = "District.Number", by.x = "system", all.x = T)
+View(merged_ed)
+
+anderson_ed <- merged_ed %>% filter(County.Name == "Anderson County")
+View(anderson_ed)
+anderson_districts <- membership %>% filter(district_id %in% c(10, 11, 12))
+View(temp2)
+anderson_ed <- merge(anderson_ed, temp2, by.x = "system", by.y = "district_id")
+View(temp)
+''
