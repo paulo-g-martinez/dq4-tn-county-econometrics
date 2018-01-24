@@ -1,6 +1,8 @@
 library("tidyverse")
 library("dplyr")
 library("magrittr")
+library("gdata")
+library("ggplot2")
 
 load("irs.Rda")
 
@@ -9,7 +11,8 @@ ach_profile <- read.csv(file="data/achievement_profile_data_with_CORE.csv", head
 load("zip_code.Rda")
 
 membership <- read.csv("./data/data_2015_membership_school.csv", header = TRUE)
-membership %<>% filter(grade %in% c(9,10,11,12), race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders")
+membership %<>% filter(grade %in% c(9,10,11,12), race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders") %>% 
+  rename(grade_enrollment = enrollment)
 
 crosswalk <- read.xls("./data/data_district_to_county_crosswalk.xls", header = TRUE)
 
@@ -24,29 +27,19 @@ View(districts)
 
 districts$total_expenditures <- districts$Per_Pupil_Expenditures * districts$enrollment
 
+zipcodes <- merge(zip_code, irs11, by.x="zip", by.y="zipcode")
+zipcodes <- zipcodes %>% 
+  select("zip", "county")
+zipcodes <- zipcodes[!duplicated(zipcodes),]
 
+# template: irs_w_counties <- merge(zipcodes, irs11, by.y="zipcode", by.x="zip", all.y = T)
 
-'''
-districts %<>% group_by("Column.Name") %>% 
-  summarise(AlgI=mean(AlgI),
-            AlgII=mean(AlgII),
-            BioI=mean(BioI),
-            Chemistry=mean(Chemistry),
-            ELA=mean(ELA),
-            EngI=mean(EngI),
-            EngII=mean(EngII),
-            EngIII=mean(EngIII),
-            Math=mean(Math),
-            Science=mean(Science),
-            Enrollment=sum(Enrollment),
-            Pct_Black=mean(Pct_Black),
-            Pct_Hispanic=mean(Pct_Hispanic),
-            Pct_Native_American=mean(Pct_Native_American),
-            Pct_EL=mean(Pct_EL),
-            Pct_SWD=mean(Pct_SWD),
-            Pct_ED=mean(Pct_ED),
-            Per_Pupil_Expenditures=#mean(Per_Pupil_Expenditures),
-            '''
-            
-            
-            
+irs13_counties <- merge(zipcodes, irs13, by.y="zipcode", by.x="zip", all.y = T)
+
+irs13_counties %>%
+  group_by(zip, county) %>% 
+  summarise(agi=sum(adjusted_gross_income, na.rm = T))
+
+View(irs13_agi)
+
+View(zip_code)

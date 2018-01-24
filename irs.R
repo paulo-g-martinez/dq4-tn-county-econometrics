@@ -39,7 +39,8 @@ column_assigner <- function(df) {
 }
 
 clean_zips <- function(df) {
-  df2 <- df[!(df$size_of_adjusted_gross_income == "Total" | df$size_of_adjusted_gross_income == ""),]
+  df2 <- df[!(df$size_of_adjusted_gross_income == ""),]
+  df2 <- df2[!(grepl("Total", df2$size_of_adjusted_gross_income)),]
   df2[,3:ncol(df2)] = sapply(df2[,3:ncol(df2)], function(x) suppressWarnings(as.numeric(as.character(x))))
   for (name in names(df2)) {
     if (grepl("zip", name)) next
@@ -48,10 +49,12 @@ clean_zips <- function(df) {
     
     df2[name] <- df2[name] * 1000
   }
+
   df2
 }
 
 dfs <- lapply(dfs, column_assigner)
+
 dfs <- lapply(dfs, clean_zips)
 
 irs11 <- dfs[[1]]

@@ -1,0 +1,21 @@
+'''
+districts %<>% group_by("Column.Name") %>% 
+summarise(AlgI=mean(AlgI),
+AlgII=mean(AlgII),
+BioI=mean(BioI),
+Chemistry=mean(Chemistry),
+ELA=mean(ELA),
+EngI=mean(EngI),
+EngII=mean(EngII),
+EngIII=mean(EngIII),
+Math=mean(Math),
+Science=mean(Science),
+Enrollment=sum(Enrollment),
+Pct_Black=mean(Pct_Black),
+Pct_Hispanic=mean(Pct_Hispanic),
+Pct_Native_American=mean(Pct_Native_American),
+Pct_EL=mean(Pct_EL),
+Pct_SWD=mean(Pct_SWD),
+Pct_ED=mean(Pct_ED),
+Per_Pupil_Expenditures=#mean(Per_Pupil_Expenditures),
+'''
