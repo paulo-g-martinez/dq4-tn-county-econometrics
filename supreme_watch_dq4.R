@@ -1,9 +1,12 @@
 library("gdata")
 library("tidyverse")
+library("plotly")
+library("maps")
+library("plyr")
+library("dplyr")
 
 # string vector of file names in our local tax_data folder
 files <- list.files(path = "./data/tax_data")
-
 #path and variable building loop for irs data files
 for (f in files) {
   #make new variable name out of df and the first two characters of the target file name
@@ -44,11 +47,10 @@ df13 <- column_assigner(df13)
 df14 <- column_assigner(df14)
 df15 <- column_assigner(df15)
 
-dfs <- list(df11, df12, df14, df15)
+dfs <- list(df11, df12, df13, df14, df15)
 
 #convert irs columns to their appropriate data types
 #this code asserts that "number" is a good discriminant between the dollar and count columns: str_detect(colnames(df15), "amount") & str_detect(colnames(df15), "number")
-
 irs_cleaner <- function(df) {
   df2 <- df[!(df$size_of_adjusted_gross_income == ""),]
   df2 <- df2[!(grepl("Total", df2$size_of_adjusted_gross_income)),]
@@ -69,37 +71,36 @@ df13 <- irs_cleaner(df13)
 df14 <- irs_cleaner(df14)
 df15 <- irs_cleaner(df15)
 
-View(df11)
-View(df12)
-View(df13)
-View(df14)
-View(df15)
-
-#Attempting Choropleth of AGI groupped by zipcode
-library("plotly")
-library("maps")
+#Attempting Barplot of AGI groupped by zipcode
+irs13_counties %>% 
+  #dplyr::select(zip, adjusted_gross_income) %>% 
+  group_by(zip) %>% 
+  summarise(agi = sum(adjusted_gross_income)) %>% 
+  View()
+  
 
 #load in the county countour df
 county_df <- map_data("county")
 county_df <- county_df %>% 
   filter(region == "tennessee")
 colnames(county_df)[colnames(county_df) == "subregion"] <- "county"
-
+#countour map of Tn counties
 ggplot(county_df, aes(long, lat, group = group)) +
   geom_polygon(alpha = 0.5, color = "white", fill = "dark green") +
   coord_fixed(ratio = 1/1)
 
+
+
 #Time to read in the education data frame (Let's just start with Alex's df to simplify our life for now)
 ach_profile <- read_csv("data/achievement_profile_data_with_CORE.csv")
 #give better name to Enrollment column
-ach_profile <- rename(ach_profile, distr_enrollment = Enrollment)
-View(ach_profile)
+ach_profile <- ach_profile %>% 
+  dplyr::rename(dist_enrollment = Enrollment)
 
 ach_financials <- ach_profile %>% 
-  select(system, system_name, system_enrollment, Per_Pupil_Expenditures) %>% 
-  rename(district_no = system, district = system_name, dist_enrollment = system_enrollment) %>% 
+  select(system, system_name, dist_enrollment, Per_Pupil_Expenditures) %>% 
+  dplyr::rename(district_no = system, district = system_name) %>% 
   mutate(district_expenditure = dist_enrollment*Per_Pupil_Expenditures)
-View(ach_financials)
 
 #now let's read in the zip code data frame to know what county each zip belongs to
      # Commented all this out because reading it in took a while
@@ -115,68 +116,62 @@ zipcodes <- merge(zip_code, df11, by.x="zip", by.y="zipcode")
 zipcodes <- zipcodes %>% 
   select("zip", "county")
 zipcodes <- zipcodes[!duplicated(zipcodes),] #drop duplicate rows
-View(zip_code)
 
 #add county names to irs11
-irs11_w_counties <- merge(zipcodes, df11, by.y="zipcode", by.x="zip", all.y = T)
-irs12_w_counties <- merge(zipcodes, df12, by.y = "zipcode", by.x = "zip", all.y = T)
-irs13_w_counties <- merge(zipcodes, df13, by.y = "zipcode", by.x = "zip", all.y = T)
-irs14_w_counties <- merge(zipcodes, df14, by.y = "zipcode", by.x = "zip", all.y = T)
-irs15_w_counties <- merge(zipcodes, df15, by.y = "zipcode", by.x = "zip", all.y = T)
+irs11_counties <- merge(zipcodes, df11, by.y="zipcode", by.x="zip", all.y = T)
+irs12_counties <- merge(zipcodes, df12, by.y = "zipcode", by.x = "zip", all.y = T)
+irs13_counties <- merge(zipcodes, df13, by.y = "zipcode", by.x = "zip", all.y = T)
+irs14_counties <- merge(zipcodes, df14, by.y = "zipcode", by.x = "zip", all.y = T)
+irs15_counties <- merge(zipcodes, df15, by.y = "zipcode", by.x = "zip", all.y = T)
+
+# replacing county names with single name lower case
+irs13_counties$county <- tolower(gsub("(.*) (County)", "\\1", irs13_counties$county))
+irs13_counties$county <- tolower(gsub("dekalb", "de kalb", irs13_counties$county))
 
 #read in 2015 school membership dataframe from the education tn.gov website
 membership <- read_csv("data/data_2015_membership_school.csv")
+membership <- membership %>% 
+  dplyr::rename(grade_enrollment = enrollment)
 hs_membership <- membership %>% 
-  #filter by highschool grades
   filter(
     grade %in% c(9, 10, 11, 12),
-    race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders") %>% 
-  #give better name to enrollment column
-  rename(grade_enrollment = enrollment)
-View(hs_membership)
+    race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders")
 
 #Read in crosswalks because crosswalks District_number column is the same as achs system column. 
  # This means I can assign a county column to ach (which currently only has a system name)
 crosswalk <- read.xls('data/data_district_to_county_crosswalk.xls', stringsAsFactors = F, blank.lines.skip = T)
-View(crosswalk)
 # Merge ach and crosswalk to add county name to each school
 merged_ed <- merge(ach_profile, crosswalk, by.y = "District.Number", by.x = "system", all.x = T)
-View(merged_ed)
 
 #filter merged_ed by county
 anderson_ed <- merged_ed %>% filter(County.Name == 'Anderson County')
-View(anderson_ed)
 # by visual inspection I see the districts that belong to the selected county are the unique values in the system column
   #in this case they are 10, 11, 12
 
 #now I can filter hs_membership by the districts of a county
 anderson_mbrs <- hs_membership %>% 
   filter(district_id %in% c(10, 11, 12))
-View(anderson_mbrs)
 #this allows me to calculate the total highschool membership of each highschool and thus of each county
 
 #now I can merge in the columns with membership/enrollment
 anderson_ed <- merge(anderson_ed, anderson_mbrs, by.x = 'system', by.y = 'district_id')
-View(anderson_ed)
 
 #calculate expenditure per school and expenditure per grade
-anderson_ed <- mutate(anderson_ed, school_expenditure = Per_Pupil_Expenditures*school_enrollment)
 anderson_ed <- mutate(anderson_ed, grade_expenditure = Per_Pupil_Expenditures*grade_enrollment)
 
 #calculate income per county in 2013
-county_agi_13 <- irs13_w_counties %>% 
+county_agi_13 <- irs13_counties %>% 
   group_by(county) %>% 
-  summarise(agi = sum(adjusted_gross_income, na.rm = T))
-
+  summarise(agi = sum(adjusted_gross_income, na.rm = T)) %>% 
+  na.omit()
 county_agi_13$county <- tolower(gsub("(\\S+) (\\S+)", "\\1", county_agi_13$county))
 
-library(plyr)
-library(dplyr)
-choropleth <- join(county_df, county_agi_13, by = "county")
+# joining for map chloropleth
+chloropleth <- join(county_df, irs13_counties, by="county")
 
-#need to fix the regex so as to prevent NA rows from producing full opacity alpha values.
-ggplot(choropleth, aes(long, lat, group = group)) +
-  geom_polygon(alpha = choropleth$agi/24046456000, color = "white", fill = "pink") +
+# plotting
+ggplot(chloropleth, aes(long, lat, group = group)) +
+  geom_polygon(alpha = log10(chloropleth$adjusted_gross_income) / log10(24046456000), color = "white", fill = "dark green") +
   coord_fixed(ratio = 1/1)
 
 #selecting financial columns
