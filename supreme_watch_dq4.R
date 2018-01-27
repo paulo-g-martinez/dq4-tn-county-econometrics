@@ -4,7 +4,7 @@ library("tidyverse")
 # string vector of file names in our local tax_data folder
 files <- list.files(path = "./data/tax_data")
 
-#path and variable building loop for irs data
+#path and variable building loop for irs data files
 for (f in files) {
   #make new variable name out of df and the first two characters of the target file name
   v = paste("df", substr(f, 1, 2), sep = "")
@@ -75,14 +75,33 @@ View(df13)
 View(df14)
 View(df15)
 
-#Time to read in the education data frame
-# Let's just start with Alex's df to simplify our life for now
+#Attempting Choropleth of AGI groupped by zipcode
+library("plotly")
+library("maps")
+
+#load in the county countour df
+county_df <- map_data("county")
+county_df <- county_df %>% 
+  filter(region == "tennessee")
+colnames(county_df)[colnames(county_df) == "subregion"] <- "county"
+
+ggplot(county_df, aes(long, lat, group = group)) +
+  geom_polygon(alpha = 0.5, color = "white", fill = "dark green") +
+  coord_fixed(ratio = 1/1)
+
+#Time to read in the education data frame (Let's just start with Alex's df to simplify our life for now)
 ach_profile <- read_csv("data/achievement_profile_data_with_CORE.csv")
 #give better name to Enrollment column
-ach_profile <- rename(ach_profile, school_enrollment = Enrollment)
+ach_profile <- rename(ach_profile, distr_enrollment = Enrollment)
 View(ach_profile)
 
-#now let's read in the zip code data frame
+ach_financials <- ach_profile %>% 
+  select(system, system_name, system_enrollment, Per_Pupil_Expenditures) %>% 
+  rename(district_no = system, district = system_name, dist_enrollment = system_enrollment) %>% 
+  mutate(district_expenditure = dist_enrollment*Per_Pupil_Expenditures)
+View(ach_financials)
+
+#now let's read in the zip code data frame to know what county each zip belongs to
      # Commented all this out because reading it in took a while
 '
 tnzips_df <- read.xls("data/zip_code_database.xlsx", dec = ".", blank.lines.skip = T)
@@ -104,8 +123,6 @@ irs12_w_counties <- merge(zipcodes, df12, by.y = "zipcode", by.x = "zip", all.y 
 irs13_w_counties <- merge(zipcodes, df13, by.y = "zipcode", by.x = "zip", all.y = T)
 irs14_w_counties <- merge(zipcodes, df14, by.y = "zipcode", by.x = "zip", all.y = T)
 irs15_w_counties <- merge(zipcodes, df15, by.y = "zipcode", by.x = "zip", all.y = T)
-
-#
 
 #read in 2015 school membership dataframe from the education tn.gov website
 membership <- read_csv("data/data_2015_membership_school.csv")
@@ -150,4 +167,20 @@ anderson_ed <- mutate(anderson_ed, grade_expenditure = Per_Pupil_Expenditures*gr
 county_agi_13 <- irs13_w_counties %>% 
   group_by(county) %>% 
   summarise(agi = sum(adjusted_gross_income, na.rm = T))
+
+county_agi_13$county <- tolower(gsub("(\\S+) (\\S+)", "\\1", county_agi_13$county))
+
+library(plyr)
+library(dplyr)
+choropleth <- join(county_df, county_agi_13, by = "county")
+
+#need to fix the regex so as to prevent NA rows from producing full opacity alpha values.
+ggplot(choropleth, aes(long, lat, group = group)) +
+  geom_polygon(alpha = choropleth$agi/24046456000, color = "white", fill = "pink") +
+  coord_fixed(ratio = 1/1)
+
+#selecting financial columns
+anderson_ed_financials %>% 
+  select(system, system_name, system_enrollment, ACT_Composite, County.Number, County.Name, district_name, school_id, school_name, grade, grade_enrollment, grade_expenditure)
+
   
