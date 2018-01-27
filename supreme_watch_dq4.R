@@ -39,15 +39,24 @@ column_assigner <- function(df) {
   }
   colnames(df) <- df[5,]# assign the names from the 5th row to the dataframe's actual column names
   df <- df[-c(1:5),]# now we can dropp the first five rows
+  df <- df[, !names(df) %in% c("na_na")]
   df
 }
-df11 <- column_assigner(df11)
-df12 <- column_assigner(df12)
-df13 <- column_assigner(df13)
-df14 <- column_assigner(df14)
-df15 <- column_assigner(df15)
 
-dfs <- list(df11, df12, df13, df14, df15)
+#df11 <- column_assigner(df11)
+#df12 <- column_assigner(df12)
+#df13 <- column_assigner(df13)
+#df14 <- column_assigner(df14)
+#df15 <- column_assigner(df15)
+
+#dfs <- list(df11, df12, df13, df14, df15)
+
+#save(df11, file = "df11.Rda")
+#save(df12, file = "df12.Rda")
+#save(df13, file = "df13.Rda")
+#save(df14, file = "df14.Rda")
+#save(df15, file = "df15.Rda)
+
 
 #convert irs columns to their appropriate data types
 #this code asserts that "number" is a good discriminant between the dollar and count columns: str_detect(colnames(df15), "amount") & str_detect(colnames(df15), "number")
