@@ -9,18 +9,19 @@ library("maps")
      
 
 # reading in irs11, irs12, irs13, irs14, irs15
-load("irs.Rda")
+load("data/irs.Rda")
+
 
 # reading in ach_profile
 ach_profile <- read.csv(file="data/achievement_profile_data_with_CORE.csv", header = TRUE)
 
 # reading in zip_code
-load("zip_code.Rda")
+load("data/zip_code.Rda")
 
 # reading in membership
-membership <- read.csv("./data/tax_data/data_2015_membership_school.csv", header = TRUE)
+membership <- read.csv("./data/data_2015_membership_school.csv", header = TRUE)
 membership %<>% filter(grade %in% c(9,10,11,12), race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders") %>% 
-  rename(grade_enrollment = enrollment)
+  dplyr::rename(grade_enrollment = enrollment)
 
 # reading in crosswalk
 crosswalk <- read.xls("./data/data_district_to_county_crosswalk.xls", header = TRUE)
@@ -41,8 +42,8 @@ zipcodes <- zipcodes[!duplicated(zipcodes),]
 # merge irs13 with zipcodes -> irs13_counties
 irs13_counties <- merge(zipcodes, irs13, by.y="zipcode", by.x="zip", all.y = T)
 irs13_counties %<>%
-  group_by(county) %>% 
-  summarise(agi=sum(adjusted_gross_income, na.rm = T)) %>% 
+  dplyr::group_by(county) %>% 
+  dplyr::summarise(agi=sum(adjusted_gross_income, na.rm = T)) %>% 
   na.omit()
 # -------------------------------------------
 
@@ -68,6 +69,7 @@ chloropleth$Col <- log10(chloropleth$agi) / log10(24046456000)
 # plotting
 ggplot(chloropleth, aes(long, lat, group = group, fill=Col)) +
   geom_polygon(color = "white") +
+  labs(title = "Choropleth of AGI by County") + 
   coord_fixed(ratio = 1/1)
   
 # ---------------------------------------------------------------
@@ -77,8 +79,8 @@ ggplot(chloropleth, aes(long, lat, group = group, fill=Col)) +
 
 # grouping by system number and county
 sysno_county <- districts %>% 
-  group_by(system, County.Name) %>% 
-  summarise(total_enrollment = mean(Enrollment, na.rm = TRUE),
+  dplyr::group_by(system, County.Name) %>% 
+  dplyr::summarise(total_enrollment = mean(Enrollment, na.rm = TRUE),
             per_pupil_exp = mean(Per_Pupil_Expenditures, na.rm = TRUE)) %>% 
   na.omit()
 
@@ -94,8 +96,8 @@ prc_agi_ed <- merge(sysno_county, irs13_counties, by.x="County.Name", by.y="coun
 
 # grouping further by county alone and averaging/summing
 prc_agi_ed %<>% 
-  group_by(County.Name) %>% 
-  summarise(total_enrollment = sum(total_enrollment, na.rm = TRUE),
+  dplyr::group_by(County.Name) %>% 
+  dplyr::summarise(total_enrollment = sum(total_enrollment, na.rm = TRUE),
             per_pupil_exp = mean(per_pupil_exp, na.rm = TRUE),
             total_expenditures = sum(total_expenditures, na.rm = TRUE),
             agi = mean(agi, na.rm = TRUE))
@@ -123,8 +125,8 @@ View(irs13)
 irs13_counties <- merge(zipcodes, irs13, by.y="zipcode", by.x="zip", all.y = T)
 
 irs13_counties %<>%
-  group_by(county) %>% 
-  summarise(agi=sum(adjusted_gross_income, na.rm = T)) %>% 
+  dplyr::group_by(county) %>% 
+  dplyr::summarise(agi=sum(adjusted_gross_income, na.rm = T)) %>% 
   na.omit()
 
 View(irs13_counties)
@@ -134,13 +136,13 @@ districts$grade_expenditure <- districts$Per_Pupil_Expenditures * districts$grad
 View(districts)
 
 county_expenditure <- districts %>% 
-  group_by(system, County.Name) %>% 
-  summarise(act_comp = mean(ACT_Composite, na.rm=T),
+  dplyr::group_by(system, County.Name) %>% 
+  dplyr::summarise(act_comp = mean(ACT_Composite, na.rm=T),
             per_pupil_exp = mean(Per_Pupil_Expenditures, na.rm=T))
 
 county_expenditure %<>% 
-  group_by(County.Name) %>% 
-  summarise(act_avg = mean(act_comp, na.rm=T),
+  dplyr::group_by(County.Name) %>% 
+  dplyr::summarise(act_avg = mean(act_comp, na.rm=T),
             avg_per_pupil_expenditure = mean(per_pupil_exp, na.rm=T)) %>% 
   na.omit()
 
@@ -181,8 +183,8 @@ qplot(agi_pupil_expenditure$agi, geom="histogram") + ggtitle("Distribution of AG
   labs(x = "AGI")
 
 county_act = districts %>% 
-  group_by(County.Name) %>% 
-  summarise(act_avg = mean(ACT_Composite, na.rm=T),
+  dplyr::group_by(County.Name) %>% 
+  dplyr::summarise(act_avg = mean(ACT_Composite, na.rm=T),
             high_school_expenditure = sum(grade_expenditure, na.rm=T)) %>% 
   na.omit()
 
