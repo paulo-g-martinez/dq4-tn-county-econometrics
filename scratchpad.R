@@ -1,3 +1,10 @@
+#per pupil expenditure grouped by county
+districts_redux <- districts %>% 
+  dplyr::select(system, system_name, Enrollment, Per_Pupil_Expenditures, ACT_Composite, County.Name, grade, grade_enrollment) %>% 
+  dplyr::mutate(dist_expenditure = Enrollment*Per_Pupil_Expenditures)
+
+names(districts_redux) <- c("dist_no", "dist", "dist_enrollment", "dollars_per_pupil", "ACT_composite", "county_name", "grade", "dollars_per_grade", "dollars_per_dist")
+
 # 1.0 Column plot of agi grouped by zipcode
 col_plot <- irs13 %>% 
   dplyr::filter(zipcode != "00000") %>% 
@@ -45,12 +52,3 @@ ggplot(irs13_zip_plotable, aes(x = longitude, y = latitude, alpha = agi/pop, siz
   geom_point(color = "dark green") +
   coord_fixed(ratio = 1/1) +
   labs(title = "Income Distribution Grouped by Zipcode")
-
-
-#attempting to overlay plots but somehow group is mucking up the process.
-ggplot(chloropleth, aes(long, lat)) +
-  geom_polygon(color = "white") +
-  geom_point(data = irs13_zip_plotable, aes(x = longitude, y = latitude, alpha = agi/pop, size = pop, color = "agi/pop")) +
-  geom_point(color = "dark green") +
-  labs(title = "Choropleth of AGI by County") + 
-  coord_fixed(ratio = 1/1)

@@ -69,7 +69,10 @@ chloropleth$Col <- log10(chloropleth$agi) / log10(24046456000)
 # plotting
 ggplot(chloropleth, aes(long, lat, group = group, fill=Col)) +
   geom_polygon(color = "white") +
-  labs(title = "Choropleth of AGI by County") + 
+  labs(title = "Choropleth of AGI by County", subtitle = "overlaid with a plot of wealth bubbles") + 
+  geom_point(data = irs13_zip_plotable, 
+             aes(longitude, latitude, alpha = agi/pop, size = pop), 
+             color = "yellow", inherit.aes = F) +
   coord_fixed(ratio = 1/1)
   
 # ---------------------------------------------------------------
