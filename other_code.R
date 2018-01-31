@@ -17,5 +17,5 @@ Pct_Native_American=mean(Pct_Native_American),
 Pct_EL=mean(Pct_EL),
 Pct_SWD=mean(Pct_SWD),
 Pct_ED=mean(Pct_ED),
-Per_Pupil_Expenditures=#mean(Per_Pupil_Expenditures),
+Per_Pupil_Expenditures=mean(Per_Pupil_Expenditures),
 '''

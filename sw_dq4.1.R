@@ -6,6 +6,8 @@ library("gdata")
 library("ggplot2")
 library("plotly")
 library("maps")
+library("reshape2")
+library("GGally")
      
 
 # reading in irs11, irs12, irs13, irs14, irs15
@@ -42,9 +44,32 @@ zipcodes <- zipcodes[!duplicated(zipcodes),]
 irs13_counties <- merge(zipcodes, irs13, by.y="zipcode", by.x="zip", all.y = T)
 irs13_counties %<>%
   group_by(county) %>% 
-  summarise(agi=sum(adjusted_gross_income, na.rm = T)) %>% 
+  summarise(agi=sum(adjusted_gross_income, na.rm = T),
+            num_returns=sum(number_of_returns, na.rm = T)) %>% 
   na.omit()
+
 # -------------------------------------------
+
+# CORRELATION MATRIX
+
+corr <- districts %>% 
+  group_by(system, County.Name) %>% 
+  summarise(per_pupil_exp=mean(Per_Pupil_Expenditures, na.rm=TRUE),
+          enrollment=mean(Enrollment, na.rm=TRUE),
+          act_comp=mean(ACT_Composite, na.rm=TRUE),
+          graduation=mean(Graduation, na.rm=TRUE)) %>% 
+  mutate(dist_expenditure = per_pupil_exp*enrollment)
+  
+
+
+View(corr)
+
+'load("irs_edu_13.Rda")
+irs_edu_13 <- irs_edu_13[,-c(2:12)]
+irs_edu_13 <- irs_edu_13[,-c(5:15)]
+corr_matrix <- ggcorr(irs_edu_13 ,geom = "circle", digits = 0, hjust=1)
+plot(corr_matrix)'''
+
 
 # CHLOROPLETH OF AGI BY COUNTY
 
@@ -62,13 +87,36 @@ colnames(county_df)[colnames(county_df)=="subregion"] <- "county"
 # joining for map chloropleth
 chloropleth <- join(county_df, irs13_counties, by="county")
 
-rbPal <- colorRampPalette(c('light blue', 'dark blue'))
+# rbPal <- colorRampPalette(c('light blue', 'dark blue'))
 chloropleth$Col <- log10(chloropleth$agi) / log10(24046456000)
 
+# Create the getmode function. (because R is dumb)
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# create a plotable df that has zip, lat, lon, pop, and agi
+irs13_zip_plotable <- merge(zip_code, irs13, by.y = "zipcode", by.x = "zip", all.y = T, all.x = T) %>% 
+  dplyr::select("zip", "latitude", "longitude", "irs_estimated_population_2014", "adjusted_gross_income") %>% 
+  dplyr::filter(zip != "00000", irs_estimated_population_2014 != 0) %>% 
+  dplyr::group_by(zip) %>% 
+  dplyr::summarise(agi = sum(adjusted_gross_income, na.rm = T),
+                   latitude = getmode(latitude), longitude = getmode(longitude),
+                   pop = getmode(irs_estimated_population_2014))
+
 # plotting
-ggplot(chloropleth, aes(long, lat, group = group, fill=Col)) +
+combo_chloro <- ggplot(chloropleth, aes(long, lat, group = group, fill=Col)) +
   geom_polygon(color = "white") +
+  labs(title = "Choropleth of AGI by County") + 
+  geom_point(data = irs13_zip_plotable, aes(longitude, latitude, alpha = agi/pop, size = pop), inherit.aes = F, color = "orange") +
+  #geom_point
   coord_fixed(ratio = 1/1)
+
+
+#agi_by_county <- ggplot(chloropleth, aes(long, lat, group = group, fill=Col)) +
+#  geom_polygon(color = "white") +
+#  coord_fixed(ratio = 1/1)'''
   
 # ---------------------------------------------------------------
 
@@ -98,7 +146,10 @@ prc_agi_ed %<>%
   summarise(total_enrollment = sum(total_enrollment, na.rm = TRUE),
             per_pupil_exp = mean(per_pupil_exp, na.rm = TRUE),
             total_expenditures = sum(total_expenditures, na.rm = TRUE),
-            agi = mean(agi, na.rm = TRUE))
+            agi = mean(agi, na.rm = TRUE),
+            total_returns = mean(num_returns, na.rm = TRUE))
+
+
 
 # calculating percentage of county expenditure to county agi
 prc_agi_ed$agi_prc <- prc_agi_ed$total_expenditures / prc_agi_ed$agi
@@ -108,7 +159,150 @@ total_tn_school_expenditure <- sum(prc_agi_ed$total_expenditures)
 
 # calculating county's expenditure as percentage of total
 prc_agi_ed$county_prc <- prc_agi_ed$total_expenditures / total_tn_school_expenditure
-View(prc_agi_ed)
+
+# calculating average agi per return
+prc_agi_ed$avg_agi_per_return <- prc_agi_ed$agi / prc_agi_ed$total_returns
+
+agi_county_prc <- ggplot(prc_agi_ed, aes(y=county_prc, x=agi_prc, label=County.Name)) + 
+  geom_point() +
+  geom_text(aes(label=ifelse(county_prc>0.03|(agi_prc>0.13&county_prc<0.001),as.character(County.Name), "")), hjust=-0.2, vjust=0, size=3) +
+  labs(y="County Exp As % of State Exp", x="County Exp As % of County AGI")
+  
+#  annotate(geom = "text", x = prc_agi_ed$agi_prc, y = prc_agi_ed$county_prc, label=prc_agi_ed$County.Name, size = 2) +
+
+# CHLOROPLETH AGI PER RETURN
+
+colnames(county_df)[colnames(county_df)=="county"] <- "County.Name"
+
+# joining for map chloropleth
+chloropleth2 <- join(county_df, prc_agi_ed, by="County.Name")
+
+# rbPal <- colorRampPalette(c('light blue', 'dark blue'))
+chloropleth2$Col <- log10(chloropleth2$avg_agi_per_return) / log10(110280.91)
+
+# plotting
+avg_agi_by_county <- ggplot(chloropleth2, aes(long, lat, group = group, fill=Col)) +
+  geom_polygon(color = "white") +
+  coord_fixed(ratio = 1/1)
+
+# HIGH SCHOOL
+
+high_school <- districts %>% 
+  group_by(system, County.Name) %>% 
+  summarise(AlgI=mean(AlgI, na.rm = TRUE),
+            AlgII=mean(AlgII, na.rm = TRUE),
+            BioI=mean(BioI, na.rm = TRUE),
+            Chemistry=mean(Chemistry, na.rm = TRUE),
+            ELA=mean(ELA, na.rm = TRUE),
+            EngI=mean(EngI, na.rm = TRUE),
+            EngII=mean(EngII, na.rm = TRUE),
+            EngIII=mean(EngIII, na.rm = TRUE),
+            Math=mean(Math, na.rm = TRUE),
+            Science=mean(Science, na.rm = TRUE),
+            act_comp=mean(ACT_Composite, na.rm = TRUE),
+            hs_enrollment=sum(grade_enrollment, na.rm = TRUE)) %>%
+  na.omit()
+
+# renaming counties in districts
+high_school$County.Name <- tolower(gsub("(.*) (County)", "\\1", high_school$County.Name))
+high_school$County.Name <- tolower(gsub("dekalb", "de kalb", high_school$County.Name))
+
+# joining districts to irs13_counties
+hs_irs <- merge(high_school, irs13_counties, by.x="County.Name", by.y="county")
+
+# grouping further by county alone and averaging/summing
+hs_irs %<>% 
+  group_by(County.Name) %>% 
+  summarise(AlgI=mean(AlgI, na.rm = TRUE),
+            AlgII=mean(AlgII, na.rm = TRUE),
+            BioI=mean(BioI, na.rm = TRUE),
+            Chemistry=mean(Chemistry, na.rm = TRUE),
+            ELA=mean(ELA, na.rm = TRUE),
+            EngI=mean(EngI, na.rm = TRUE),
+            EngII=mean(EngII, na.rm = TRUE),
+            EngIII=mean(EngIII, na.rm = TRUE),
+            Math=mean(Math, na.rm = TRUE),
+            Science=mean(Science, na.rm = TRUE),
+            hs_enrollment=sum(hs_enrollment, na.rm = TRUE),
+            agi = mean(agi, na.rm = TRUE),
+            act_comp = mean(act_comp, na.rm = TRUE),
+            total_returns = mean(num_returns, na.rm = TRUE))
+
+hs_irs$agi_per_return <- hs_irs$agi /hs_irs$total_returns
+
+hs_irs_no_outliers <- hs_irs[-c(22, 89),]
+
+act_agi_per_return <- ggplot(hs_irs_no_outliers, aes(y=act_comp, x=agi_per_return)) +
+  geom_point() + 
+  geom_smooth(method="lm") + 
+  labs(y="ACT Avg", x="Avg AGI Per Return")
+
+hs <- melt(hs_irs, id.vars=c("County.Name", "hs_enrollment", "agi", "act_comp", "total_returns", "agi_per_return"))
+
+top_5_agi <- head(arrange(hs, desc(agi_per_return)), n = 50)
+top_5_agi$county <- factor(top_5_agi$County.Name, 
+                           levels=c("williamson", "fayette", "knox", "davidson", "wilson"))
+bot_5_agi <- head(arrange(hs, agi_per_return), n= 50)
+bot_5_agi$county <- factor(bot_5_agi$County.Name, 
+                           levels=c("hancock", "clay", "cocke", "van buren", "lake"))
+
+top_5_agi_facet <- ggplot(top_5_agi, aes(y=value, x=variable)) +
+  geom_bar(stat="identity") + 
+  ylim(0, 100) +
+  facet_wrap(~county, scales="free_x") +
+  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  labs(x="Subject", y="Proficiency Rate")
+
+bot_5_agi_facet <- ggplot(bot_5_agi, aes(y=value, x=variable)) +
+  geom_bar(stat="identity") + 
+  ylim(0, 100) +
+  facet_wrap(~county, scales="free_x") +
+  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  labs(x="Subject", y="Proficiency Rate")
+
+save(corr_matrix, agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro, file="final-graphs.Rda")
+
+# ACT COMP VS AGI PER RETURN
+
+ggplot(hs, aes(y=act_comp, x=agi_per_return)) +
+  geom_point(outlier.shape = NA) + 
+  geom_smooth(method="lm")
+
+
+# --------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -185,9 +379,6 @@ county_act = districts %>%
   summarise(act_avg = mean(ACT_Composite, na.rm=T),
             high_school_expenditure = sum(grade_expenditure, na.rm=T)) %>% 
   na.omit()
-
-
-
 
 agi_act = merge(irs13_counties, county_act, by.x = "county", by.y = "County.Name", all.y = T, all.x = T)
 

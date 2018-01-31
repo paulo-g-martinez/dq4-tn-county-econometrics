@@ -1,0 +1,54 @@
+---
+title: "SupWat"
+author: "supwat"
+date: "1/30/2018"
+output: html_document
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+library("tidyverse")
+library("plyr")
+library("dplyr")
+library("magrittr")
+library("gdata")
+library("ggplot2")
+library("plotly")
+library("maps")
+library("reshape2")
+library("GGally")
+     
+
+load("final-graphs.Rda")
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r corr_matrix, echo=FALSE}
+plot(corr_matrix)
+```
+```{r agi_county_prc, echo=FALSE}
+plot(agi_county_prc)
+```
+```{r top_5_agi_facet, echo=FALSE}
+plot(top_5_agi_facet)
+```
+```{r bot_5_agi_facet, echo=FALSE}
+plot(bot_5_agi_facet)
+```
+```{r act_agi_per_return, echo=FALSE}
+plot(act_agi_per_return)
+```
+```{r combo_chloro, echo=FALSE}
+plot(combo_chloro)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
