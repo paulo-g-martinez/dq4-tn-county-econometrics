@@ -29,9 +29,7 @@ crosswalk <- read.xls("./data/data_district_to_county_crosswalk.xls", header = T
 
 # combining ach_profile, membership, crosswalk -> districts
 districts <- merge(ach_profile, crosswalk, by.x = "system", by.y = "District.Number", type="left", all.x = TRUE)
-districts %<>% merge(membership, by.x = 'system', by.y = 'district_id', type="inner", all.x = TRUE)
-drops <- c("race_or_ethnicity", "gender")
-districts <- districts[,!(names(districts) %in% drops)]
+
 # ----------------------------------------------------------
 
 # defining zip_codes to map counties to zips
@@ -61,8 +59,6 @@ corr <- districts %>%
   mutate(dist_expenditure = per_pupil_exp*enrollment)
   
 
-
-View(corr)
 
 'load("irs_edu_13.Rda")
 irs_edu_13 <- irs_edu_13[,-c(2:12)]
@@ -199,8 +195,8 @@ high_school <- districts %>%
             EngIII=mean(EngIII, na.rm = TRUE),
             Math=mean(Math, na.rm = TRUE),
             Science=mean(Science, na.rm = TRUE),
-            act_comp=mean(ACT_Composite, na.rm = TRUE),
-            hs_enrollment=sum(grade_enrollment, na.rm = TRUE)) %>%
+            per_pupil=mean(Per_Pupil_Expenditures, na.rm = TRUE),
+            act_comp=mean(ACT_Composite, na.rm = TRUE)) %>%
   na.omit()
 
 # renaming counties in districts
@@ -223,7 +219,7 @@ hs_irs %<>%
             EngIII=mean(EngIII, na.rm = TRUE),
             Math=mean(Math, na.rm = TRUE),
             Science=mean(Science, na.rm = TRUE),
-            hs_enrollment=sum(hs_enrollment, na.rm = TRUE),
+            per_pupil=mean(per_pupil, na.rm = TRUE),
             agi = mean(agi, na.rm = TRUE),
             act_comp = mean(act_comp, na.rm = TRUE),
             total_returns = mean(num_returns, na.rm = TRUE))
@@ -237,7 +233,7 @@ act_agi_per_return <- ggplot(hs_irs_no_outliers, aes(y=act_comp, x=agi_per_retur
   geom_smooth(method="lm") + 
   labs(y="ACT Avg", x="Avg AGI Per Return")
 
-hs <- melt(hs_irs, id.vars=c("County.Name", "hs_enrollment", "agi", "act_comp", "total_returns", "agi_per_return"))
+hs <- melt(hs_irs, id.vars=c("County.Name", "agi", "act_comp", "total_returns", "agi_per_return", "per_pupil"))
 
 top_5_agi <- head(arrange(hs, desc(agi_per_return)), n = 50)
 top_5_agi$county <- factor(top_5_agi$County.Name, 
@@ -260,33 +256,82 @@ bot_5_agi_facet <- ggplot(bot_5_agi, aes(y=value, x=variable)) +
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   labs(x="Subject", y="Proficiency Rate")
 
-save(corr_matrix, agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro, file="final-graphs.Rda")
+
+
 
 # ACT COMP VS AGI PER RETURN
-
-ggplot(hs, aes(y=act_comp, x=agi_per_return)) +
-  geom_point(outlier.shape = NA) + 
-  geom_smooth(method="lm")
 
 
 # --------------------------------------------------------------------
 
 
+final <- districts %>% 
+  select("system", "Per_Pupil_Expenditures", "ACT_Composite", "Enrollment", "County.Name")
+
+final$system_exp <- final$Per_Pupil_Expenditures * final$Enrollment
+
+final %<>%
+  group_by(County.Name) %>% 
+  summarise(county_enrollment=sum(Enrollment, na.rm = TRUE),
+            county_expenditure=sum(system_exp, na.rm = TRUE),
+            county_act=mean(ACT_Composite, na.rm = TRUE))
+  
+final$county_ppe <- final$county_expenditure / final$county_enrollment
+
+final$County.Name <- tolower(gsub("(.*) (County)", "\\1", final$County.Name))
+final$County.Name <- tolower(gsub("dekalb", "de kalb", final$County.Name))
+
+final <- merge(final, irs13_counties, by.x="County.Name", by.y="county")
+
+final$county_ppe_over_agi <- final$county_ppe / final$agi
+
+final$county_ppe_over_exp <- final$county_ppe / final$county_expenditure
+
+bar_plots <- arrange(final, desc(county_act))
+bar_plots$County.Name <- factor(bar_plots$County.Name, levels=bar_plots$County.Name)
+
+ppe_over_agi <- ggplot(bar_plots, aes(x=County.Name, y=county_ppe_over_agi)) +
+  geom_col(fill='blue') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+ppe_over_exp <- ggplot(bar_plots, aes(x=County.Name, y=county_ppe_over_exp)) +
+  geom_col(fill='pink') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+ppe <- ggplot(bar_plots, aes(x=County.Name, y=county_ppe)) +
+  geom_col(fill='yellow') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+act <- ggplot(bar_plots, aes(x=County.Name, y=county_act)) +
+  geom_col(fill='green') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+final_corr <- ggcorr(final ,geom = "circle", digits = 0)
+
+final <- join(final, county_df, by="County.Name")
+
+new_final <- final %>%
+  group_by(County.Name) %>% 
+  summarise(act=mean(county_act, na.rm=T),
+            lat=mean(lat, na.rm=T),
+            long=mean(long, na.rm=T))
+            #lat=(max(lat, na.rm=T) + min(lat, na.rm=T))/2,
+            #long=(max(long, na.rm=T) + min(long, na.rm=T))/2)
+
+new_final %<>% mutate(act = round(act, 1))
 
 
+act_counties <- ggplot(final, aes(x=long, y=lat, group = group, fill=county_ppe)) +
+  geom_polygon(color = "white") +
+  labs(title = "Choropleth of PPE by County w/ ACT") + 
+  geom_text(aes( label=act,x=long, y=lat), data = new_final, inherit.aes = F, size=3, color='yellow') +
+  #geom_point
+  coord_fixed(ratio = 1/1)
+
+#------------------------------------------------------------------------
 
 
-
-
-
-
-
-
-
-
-
-
-
+save(act_counties, final_corr, act, ppe, ppe_over_exp, ppe_over_agi, corr_matrix, agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro, file="final-graphs.Rda")
 
 
 

@@ -17,7 +17,6 @@ library("maps")
 library("reshape2")
 library("GGally")
      
-
 load("final-graphs.Rda")
 ```
 
@@ -32,7 +31,7 @@ When you click the **Knit** button a document will be generated that includes bo
 
 You can also embed plots, for example:
 
-```{r corr_matrix, echo=FALSE}
+```{r corr_matrix, echo=FALSE,fig.width=17, fig.height=16}
 plot(corr_matrix)
 ```
 ```{r agi_county_prc, echo=FALSE}
@@ -50,5 +49,22 @@ plot(act_agi_per_return)
 ```{r combo_chloro, echo=FALSE}
 plot(combo_chloro)
 ```
-
+```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
+plot(act_counties)
+```
+```{r final_corr, echo=FALSE}
+plot(final_corr)
+```
+```{r act, echo=FALSE}
+plot(act)
+```
+```{r ppe, echo=FALSE}
+plot(ppe)
+```
+```{r ppe_over_exp, echo=FALSE}
+plot(ppe_over_exp)
+```
+```{r ppe_over_agi, echo=FALSE}
+plot(ppe_over_agi)
+```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
