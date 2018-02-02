@@ -55,16 +55,15 @@ plot(act_counties)
 ```{r final_corr, echo=FALSE}
 plot(final_corr)
 ```
-```{r act, echo=FALSE}
+```{r act, echo=FALSE,fig.width=14, fig.height=3}
 plot(act)
 ```
-```{r ppe, echo=FALSE}
+```{r ppe, echo=FALSE,fig.width=14, fig.height=3}
 plot(ppe)
 ```
-```{r ppe_over_exp, echo=FALSE}
+```{r ppe_over_exp, echo=FALSE,fig.width=14, fig.height=3}
 plot(ppe_over_exp)
 ```
-```{r ppe_over_agi, echo=FALSE}
+```{r ppe_over_agi, echo=FALSE,fig.width=14, fig.height=3}
 plot(ppe_over_agi)
 ```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
