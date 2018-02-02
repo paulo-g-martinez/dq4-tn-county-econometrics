@@ -61,7 +61,8 @@ corr <- districts %>%
 
 
 load("irs_edu_13.Rda")
-View(irs_edu_13)
+act_agi_irs <- ggplot(irs_edu_13, aes(x=adjusted_gross_income, y=ACT_Composite))+
+  geom_point() + scale_y_log10() +scale_x_log10()+ labs(x="AGI", y="ACT")
 irs_edu_13 <- irs_edu_13[,-c(2:12)]
 irs_edu_13 <- irs_edu_13[,-c(5:15)]
 col_names <- c(
@@ -88,7 +89,7 @@ col_names <- c(
   'agi_q'
 )
 names(irs_edu_13) <- col_names
-corr_matrix <- ggcorr(irs_edu_13 ,geom = "circle", digits = 0, hjust=0.75)
+corr_matrix <- ggcorr(irs_edu_13 ,geom = "circle", digits = 0, hjust=0.75, size=7)
 plot(corr_matrix)
 
 
@@ -256,7 +257,7 @@ hs_irs_no_outliers <- hs_irs[-c(22, 89),]
 act_agi_per_return <- ggplot(hs_irs_no_outliers, aes(y=act_comp, x=agi_per_return)) +
   geom_point() + 
   geom_smooth(method="lm") + 
-  labs(y="ACT Avg", x="Avg AGI Per Return")
+  labs(y="ACT", x="AGI Per Return")
 
 hs <- melt(hs_irs, id.vars=c("County.Name", "agi", "act_comp", "total_returns", "agi_per_return", "per_pupil"))
 
@@ -332,6 +333,7 @@ ppe <- ggplot(bar_plots, aes(x=County.Name, y=ppe)) +
 
 act <- ggplot(bar_plots, aes(x=County.Name, y=act)) +
   geom_col(fill='green') +
+  coord_cartesian(ylim=c(12,25)) +
   theme(axis.text.x = element_text(angle=90, hjust=1)) +
   labs(x='County', y='ACT')
 
@@ -361,103 +363,4 @@ act_counties <- ggplot(final, aes(x=long, y=lat, group = group, fill=ppe)) +
 #------------------------------------------------------------------------
 
 
-save(act_counties, final_corr, act, ppe, ppe_over_exp, ppe_over_agi, corr_matrix, agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro, file="final-graphs.Rda")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ------------------NEEDS CLEANING----------------------------------------------------
-
-# template: irs_w_counties <- merge(zipcodes, irs11, by.y="zipcode", by.x="zip", all.y = T)
-
-View(irs13)
-
-irs13_counties <- merge(zipcodes, irs13, by.y="zipcode", by.x="zip", all.y = T)
-
-irs13_counties %<>%
-  group_by(county) %>% 
-  summarise(agi=sum(adjusted_gross_income, na.rm = T)) %>% 
-  na.omit()
-
-View(irs13_counties)
-
-districts$grade_expenditure <- districts$Per_Pupil_Expenditures * districts$grade_enrollment
-
-View(districts)
-
-county_expenditure <- districts %>% 
-  group_by(system, County.Name) %>% 
-  summarise(act_comp = mean(ACT_Composite, na.rm=T),
-            per_pupil_exp = mean(Per_Pupil_Expenditures, na.rm=T))
-
-county_expenditure %<>% 
-  group_by(County.Name) %>% 
-  summarise(act_avg = mean(act_comp, na.rm=T),
-            avg_per_pupil_expenditure = mean(per_pupil_exp, na.rm=T)) %>% 
-  na.omit()
-
-county_df = map_data("county")
-
-
-
-View(county_df)
-
-county_df <- county_df[(county_df["region"] == "tennessee"),]
-
-irs13_counties$county <- tolower(gsub("(.*) (County)", "\\1", irs13_counties$county))
-irs13_counties$county <- tolower(gsub("dekalb", "de kalb", irs13_counties$county))
-View(irs13_counties)
-View(county_df)
-colnames(county_df)[colnames(county_df)=="subregion"] <- "county"
-
-chloropleth <- join(county_df, irs13_counties, by="county")
-
-View(chloropleth)
-
-ggplot(chloropleth, aes(long, lat, group = group)) +
-  geom_polygon(alpha = log10(chloropleth$agi) / log10(24046456000), color = "white", fill = "dark green") +
-  coord_fixed(ratio = 1/1)
-
-
-View(county_act)
-
-ggplot(county_expenditure, aes(y=act_avg, x=avg_per_pupil_expenditure)) +
-  geom_point(alpha=0.4) + geom_smooth(method='lm')
-
-agi_pupil_expenditure <- merge(county_expenditure, irs13_counties, by.x = "County.Name", by.y = "county")
-
-ggplot(agi_pupil_expenditure, aes(y=avg_per_pupil_expenditure, x=agi)) + 
-  geom_point() + scale_x_log10() + geom_smooth(method="lm")
-
-qplot(agi_pupil_expenditure$agi, geom="histogram") + ggtitle("Distribution of AGI") +
-  labs(x = "AGI")
-
-county_act = districts %>% 
-  group_by(County.Name) %>% 
-  summarise(act_avg = mean(ACT_Composite, na.rm=T),
-            high_school_expenditure = sum(grade_expenditure, na.rm=T)) %>% 
-  na.omit()
-
-agi_act = merge(irs13_counties, county_act, by.x = "county", by.y = "County.Name", all.y = T, all.x = T)
-
-View(irs13_counties)
-
-ggplot(agi_act, aes(y=act_avg, x=agi)) + 
-  geom_point() + geom_smooth(method='lm')
+save(act_agi_irs, act_counties, final_corr, act, ppe, ppe_over_exp, ppe_over_agi, corr_matrix, agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro, file="final-graphs.Rda")
