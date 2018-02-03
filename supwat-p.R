@@ -293,16 +293,18 @@ bot_5_agi$county <- factor(bot_5_agi$County.Name,
                            levels=c("hancock", "clay", "cocke", "van buren", "lake"))
 
 top_5_agi_facet <- ggplot(top_5_agi, aes(y=value, x=variable)) +
-  geom_bar(stat="identity") + 
+  geom_bar(stat="identity", fill = "orange", alpha = .5) + 
   ylim(0, 100) +
-  facet_wrap(~county, scales="free_x") +
+  facet_grid(.~county) +
+  #facet_wrap(~county, scales="free_x") +
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   labs(x="Subject", y="Proficiency Rate")
 
 bot_5_agi_facet <- ggplot(bot_5_agi, aes(y=value, x=variable)) +
-  geom_bar(stat="identity") + 
+  geom_bar(stat="identity", fill = "orange", alpha = .5) + 
   ylim(0, 100) +
-  facet_wrap(~county, scales="free_x") +
+  #facet_wrap(~county, scales="free_x") +
+  facet_grid(.~county) +
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   labs(x="Subject", y="Proficiency Rate")
 
@@ -341,7 +343,7 @@ bar_plots <- arrange(final, desc(act))
 bar_plots$County.Name <- factor(bar_plots$County.Name, levels=bar_plots$County.Name)
 
 ppe_over_agi <- ggplot(bar_plots, aes(x=County.Name, y=ppe_agi)) +
-  geom_col(fill='blue') +
+  geom_col(fill='light blue') +
   theme(axis.text.x = element_text(angle=90, hjust=1)) +
   labs(x="County", y="PPE / AGI")
 
@@ -351,13 +353,14 @@ ppe_over_exp <- ggplot(bar_plots, aes(x=County.Name, y=ppe_exp)) +
   labs(x="County", y="PPE / County Exp")
 
 ppe <- ggplot(bar_plots, aes(x=County.Name, y=ppe)) +
-  geom_col(fill='yellow') +
+  geom_col(fill='green') +
+  coord_cartesian(ylim=c(7000,12000)) +
   theme(axis.text.x = element_text(angle=90, hjust=1)) +
   labs(x="County", y="PPE")
 
 act <- ggplot(bar_plots, aes(x=County.Name, y=act)) +
-  geom_col(fill='green') +
-  coord_cartesian(ylim=c(12,25)) +
+  geom_col(fill='orange') +
+  coord_cartesian(ylim=c(16,24)) +
   theme(axis.text.x = element_text(angle=90, hjust=1)) +
   labs(x='County', y='ACT')
 
@@ -380,7 +383,10 @@ new_final %<>% mutate(act = round(act, 1))
 act_counties <- ggplot(final, aes(x = long, y = lat, group = group, fill=-1*ppe)) +
   geom_polygon(color = "white") +
   labs(title = "Choropleth of PPE by County w/ ACT") + 
-  geom_text(aes( label=act,x=long, y=lat), data = new_final, inherit.aes = F, size=3, color='yellow') +
+  geom_text(aes( label=act, x=long, y=lat), data = new_final, 
+            inherit.aes = F, size = 4.5, color='orange', check_overlap = T) +
+  geom_text(aes(label = County.Name, x = long, y = lat, size = act, alpha = act), nudge_y = -.08,  data = new_final, 
+            inherit.aes = F, color = "yellow", check_overlap = T) +
   #geom_point
   coord_fixed(ratio = 1/1)
 
