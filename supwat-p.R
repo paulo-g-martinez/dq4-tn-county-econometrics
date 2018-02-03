@@ -137,8 +137,16 @@ irs13_zip_plotable <- merge(zip_code, irs13, by.y = "zipcode", by.x = "zip", all
                    zip_pop = getmode(irs_estimated_population_2014))
 
 # plotting
-combo_chloro <- ggplot(chloropleth, aes(long, lat, group = group, 
-                                        #alpha = Col)) +
+combo_chloro1 <- ggplot(chloropleth, aes(long, lat, group = group,
+                                        #fill=Cnty_AGI
+                                        )) +
+  geom_polygon(color = "white") +
+  labs(title = "Choropleth of AGI by County", subtitle = "County AGI shade of blue scaled logarithmically; darker indicates higher AGI") + 
+  geom_point(data = irs13_zip_plotable, aes(longitude, latitude, alpha = agi/zip_pop, size = zip_pop), 
+             inherit.aes = F, color = "green") +
+  coord_fixed(ratio = 1/1)
+
+combo_chloro2 <- ggplot(chloropleth, aes(long, lat, group = group, 
                                         fill=Cnty_AGI)) +
   geom_polygon(color = "white") +
   labs(title = "Choropleth of AGI by County", subtitle = "County AGI shade of blue scaled logarithmically; darker indicates higher AGI") + 
@@ -369,7 +377,7 @@ new_final <- final %>%
 new_final %<>% mutate(act = round(act, 1))
 
 
-act_counties <- ggplot(final, aes(x=long, y=lat, group = group, fill=ppe)) +
+act_counties <- ggplot(final, aes(x = long, y = lat, group = group, fill=-1*ppe)) +
   geom_polygon(color = "white") +
   labs(title = "Choropleth of PPE by County w/ ACT") + 
   geom_text(aes( label=act,x=long, y=lat), data = new_final, inherit.aes = F, size=3, color='yellow') +
@@ -379,5 +387,5 @@ act_counties <- ggplot(final, aes(x=long, y=lat, group = group, fill=ppe)) +
 #------------------------------------------------------------------------
 #Exporting plots
 save(agi_by_county, act_agi_irs, act_counties, final_corr, act, ppe, ppe_over_exp, ppe_over_agi, corr_matrix, 
-     agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro, 
-     file = "final-graphs.Rda")
+     agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro1, combo_chloro2, 
+     file = "final-graphs-p.Rda")

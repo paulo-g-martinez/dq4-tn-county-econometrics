@@ -17,41 +17,82 @@ library("maps")
 library("reshape2")
 library("GGally")
      
-load("final-graphs.Rda")
+load("final-graphs-p.Rda")
 load("data/irs_edu_13.Rda")
 ```
 
 #How Did Income Affect Education in Tennessee in the 2014 - 2015 Academic Year?
-
-map of Tennessee's counties.
-```{r agi_by_county, echo = F}
+```{r agi_by_county, echo = F, fig.width=20, fig.height=17}
 plot(agi_by_county)
 ```
 
   In 2016 **ACT** [reported](http://www.act.org/content/dam/act/unsecured/documents/R1604-ACT-Composite-Score-by-Family-Income.pdf) that students from families with an annual income of \$80,000 or more tend to score about four (4) points higher than their counterparts in families that earn less than \$80,000 a year. In 2013 the national average ACT composite score was 20.9. With ACT scores being a major (if not the primary) criteria for college admission in the US, a four (4) point difference is a big difference!
 
-## "Wealth Bubbles""
+# "Wealth Bubbles""
 ### Wealth Distribution Across TN
   Using the *2013 IRS Tax Return Data* we can plot a bubble for each (inhabited) zipcode in TN. And we can:
-  * make the bubbles larger according to the IRS's population estimates for 2013
-  * darker according to each zipcode's Adjuste Gross Income per capita (County AGI divided by County Population). 
+  
+* Make the bubbles larger according to the IRS's population estimates for 2013
 
+* Make the bubbles darker according to each zipcode's Adjuste Gross Income per capita (County AGI divided by County Population). 
+
+  The results are a bubbles that represent the wealth concentration in shades of green and the wealth distribution as the size of the bubble. 
+
+* I.E.
+    + A large light bubble represents a large population with a small AGI per capita
+    + A small dark bubble represents a small pupulation with a high AGI per capita
+  
+```{r combo_chloro1, echo=FALSE, fig.width=20, fig.height=17}
+plot(combo_chloro1)
+```
+
+### Using this data we can represent each county's AGI as shades of blue. 
+```{r combo_chloro2, echo = F, fig.width=20, fig.height=17}
+plot(combo_chloro2)
+```
+
+### Here are The average ACT composite scores for each county. 
+#### we can see that the "richest" counties do not necessarily have the highest ACT scores. 
+```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
+plot(act_counties)
+```
+
+* But this could be due to many factors. 
+    + Maybe rich counties have more students
+        + So, maybe each student gets less dollars for their education.
+    + Maybe poor counties have fewer students
+        + 
 
 ```{r corr_matrix, echo=FALSE,fig.width=17, fig.height=16}
 plot(corr_matrix)
 ```
-```{r combo_chloro, echo=FALSE, fig.width=17, fig.height=10}
-plot(combo_chloro)
-```
+
+## County Expenditure
+### Money distribution
+ We wanted to determine how a county's education expenditure compared to its adjusted gross income as well as how that expenditure related to the overall Tennessee education budget.
+ The following graph indicates that counties with a high expenditure-to-AGI ratio typically do not have budgets that make up a significant portion of TN's overall budget. On the other hand, the counties that tend to have a lower expenditure-to-AGI ratio require more of TN's total education budget.
+ 
 ```{r agi_county_prc, echo=FALSE}
 plot(agi_county_prc)
 ```
+
+
+## County Academic Performance
+### Top 5 Vs. Bottom 5 AGI Per Return
+ To visualize the academic performances of students in wealthier counties, we compared the grade averages of students in the five counties with the highest AGI per tax return against those of the five counties with the lowest AGI per return.
+ While Williamson, Knox, and Wilson tend to have higher grade averages than the bottom five counties, Fayette and Davidson, while having high AGIs per returns, tend to perform similarly to the bottom five counties.
+
 ```{r top_5_agi_facet, echo=FALSE}
 plot(top_5_agi_facet)
 ```
 ```{r bot_5_agi_facet, echo=FALSE}
 plot(bot_5_agi_facet)
 ```
+
+## Household Wealth And The ACT 
+### County AGI Per Return Impact on ACT Performance
+ Having heard the rumors of wealthier students performing better on standardized tests, we wanted to put this to the test. In taking the average AGI per return, we had a reasonable idea of the wealth of each household in each county. The plotting of this metric against the average ACT score indicates that a moderately strong correlation exists between the two. In other words, the data suggests that the students in counties with wealthier households tend to score higher on the ACT.
+ 
 ```{r act_agi_per_return, echo=FALSE}
 plot(act_agi_per_return)
 ```
@@ -59,9 +100,8 @@ plot(act_agi_per_return)
 plot(act_agi_irs)
 ```
 
-```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
-plot(act_counties)
-```
+
+    
 ```{r final_corr, echo=FALSE}
 plot(final_corr)
 ```
