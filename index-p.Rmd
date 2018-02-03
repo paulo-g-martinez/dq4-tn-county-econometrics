@@ -1,0 +1,79 @@
+---
+title: "SupWat"
+author: "supwat"
+date: "2/3/2018"
+output: html_document
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+library("tidyverse")
+library("plyr")
+library("dplyr")
+library("magrittr")
+library("gdata")
+library("ggplot2")
+library("plotly")
+library("maps")
+library("reshape2")
+library("GGally")
+     
+load("final-graphs.Rda")
+load("data/irs_edu_13.Rda")
+```
+
+#How Did Income Affect Education in Tennessee in the 2014 - 2015 Academic Year?
+
+map of Tennessee's counties.
+```{r agi_by_county, echo = F}
+plot(agi_by_county)
+```
+
+  In 2016 **ACT** [reported](http://www.act.org/content/dam/act/unsecured/documents/R1604-ACT-Composite-Score-by-Family-Income.pdf) that students from families with an annual income of \$80,000 or more tend to score about four (4) points higher than their counterparts in families that earn less than \$80,000 a year. In 2013 the national average ACT composite score was 20.9. With ACT scores being a major (if not the primary) criteria for college admission in the US, a four (4) point difference is a big difference!
+
+## "Wealth Bubbles""
+### Wealth Distribution Across TN
+  Using the *2013 IRS Tax Return Data* we can plot a bubble for each (inhabited) zipcode in TN. And we can:
+  * make the bubbles larger according to the IRS's population estimates for 2013
+  * darker according to each zipcode's Adjuste Gross Income per capita (County AGI divided by County Population). 
+
+
+```{r corr_matrix, echo=FALSE,fig.width=17, fig.height=16}
+plot(corr_matrix)
+```
+```{r combo_chloro, echo=FALSE, fig.width=17, fig.height=10}
+plot(combo_chloro)
+```
+```{r agi_county_prc, echo=FALSE}
+plot(agi_county_prc)
+```
+```{r top_5_agi_facet, echo=FALSE}
+plot(top_5_agi_facet)
+```
+```{r bot_5_agi_facet, echo=FALSE}
+plot(bot_5_agi_facet)
+```
+```{r act_agi_per_return, echo=FALSE}
+plot(act_agi_per_return)
+```
+```{r act_agi_irs, echo=FALSE}
+plot(act_agi_irs)
+```
+
+```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
+plot(act_counties)
+```
+```{r final_corr, echo=FALSE}
+plot(final_corr)
+```
+```{r act, echo=FALSE,fig.width=14, fig.height=3}
+plot(act)
+```
+```{r ppe, echo=FALSE,fig.width=14, fig.height=3}
+plot(ppe)
+```
+```{r ppe_over_exp, echo=FALSE,fig.width=14, fig.height=3}
+plot(ppe_over_exp)
+```
+```{r ppe_over_agi, echo=FALSE,fig.width=14, fig.height=3}
+plot(ppe_over_agi)
+```
