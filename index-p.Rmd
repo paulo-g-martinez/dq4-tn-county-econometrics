@@ -20,6 +20,7 @@ library("GGally")
 load("final-graphs-p.Rda")
 load("data/irs_edu_13.Rda")
 ```
+![Super Kumquat ;)](presentation/supwat.png)
 
 #How Did **Income** Affect **Education** in Tennessee in the 2014 - 2015 Academic Year?
 ```{r agi_by_county, echo = F, fig.width=20, fig.height=17}
@@ -192,6 +193,9 @@ plot(agi_county_prc)
 ```{r act_agi_per_return, echo=FALSE}
 plot(act_agi_per_return)
 ```
+
+#Conclusion:
+### We were able to confrim an observation of the **Achievement Gap** in TN; but only at the county level. This is likely due to the fact that our Income and ACT data only matched when "zoomed out" to the County Level. 
 
 ```{r act_agi_irs, echo=FALSE}
 plot(act_agi_irs)
