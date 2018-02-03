@@ -66,11 +66,13 @@ load("data/irs_edu_13.Rda") #enhancement: there seems to be a few AGI values wit
 #Scatter Plot of County AGI vs ACT composite
 act_agi_irs <- ggplot(irs_edu_13, aes(x=adjusted_gross_income, y=ACT_Composite, na.rm = T))+
                   geom_point(color = "green", alpha = 0.5) + 
+                  geom_smooth(method = "lm") +
                   geom_text(aes(label = row.names(irs_edu_13), angle = 0), nudge_y = .2, check_overlap = T) +
                   #scale_y_log10() + 
                   scale_x_log10() + 
                   labs(x="AGI", y="ACT", 
                        title = "Scatter Plot of County ACT Composite as a Function of County AGI")
+
 irs_edu_13 <- irs_edu_13[,-c(2:12)]
 irs_edu_13 <- irs_edu_13[,-c(5:15)]
 col_names <- c(
@@ -154,6 +156,19 @@ combo_chloro2 <- ggplot(chloropleth, aes(long, lat, group = group,
              inherit.aes = F, color = "green") +
   coord_fixed(ratio = 1/1)
 
+combo_chloro3 <- ggplot(chloropleth, aes(long, lat, group = group, 
+                                         fill=Cnty_AGI)) +
+  geom_polygon(color = "white") +
+  labs(title = "Choropleth of AGI by County with ACT Scores", subtitle = "County AGI shade of blue scaled logarithmically; darker indicates higher AGI") +
+  geom_text(aes( label=act, x=long, y=lat), data = new_final,
+            inherit.aes = F, size = 4.5, color='orange', check_overlap = T) +
+  #geom_text(aes(label = County.Name, x = long, y = lat
+   #             , size = act, alpha = act
+    #            ),
+     #       nudge_y = -.08,  data = new_final, inherit.aes = F, color = "yellow", 
+      #      check_overlap = T) +
+  coord_fixed(ratio = 1/1)
+
 # TN Counties
 agi_by_county <- ggplot(chloropleth, aes(long, lat, group = group, 
                                          #fill="Cnty_AGI"
@@ -207,9 +222,11 @@ prc_agi_ed$county_prc <- prc_agi_ed$total_expenditures / total_tn_school_expendi
 prc_agi_ed$avg_agi_per_return <- prc_agi_ed$agi / prc_agi_ed$total_returns
 
 agi_county_prc <- ggplot(prc_agi_ed, aes(y=county_prc, x=agi_prc, label=County.Name)) + 
-  geom_point() +
-  geom_text(aes(label=ifelse(county_prc>0.03|(agi_prc>0.13&county_prc<0.001),as.character(County.Name), "")), hjust=-0.2, vjust=0, size=3) +
-  labs(y="County Ed Exp As % of State Exp", x="County Education Expenditure As % of County AGI")
+  geom_point(color = "dark green") +
+  geom_text(aes(label=ifelse(county_prc>0.03|(agi_prc>0.13&county_prc<0.001), as.character(County.Name), "")), 
+            hjust=-0.2, vjust=0, size=3) +
+  labs(y="County Ed Exp As % of State Exp", 
+       x="County Education Expenditure As % of County AGI")
 
 #  annotate(geom = "text", x = prc_agi_ed$agi_prc, y = prc_agi_ed$county_prc, label=prc_agi_ed$County.Name, size = 2) +
 
@@ -276,10 +293,10 @@ hs_irs$agi_per_return <- hs_irs$agi /hs_irs$total_returns
 hs_irs_no_outliers <- hs_irs[-c(22, 89),]
 
 act_agi_per_return <- ggplot(hs_irs_no_outliers, aes(y=act_comp, x=agi_per_return)) +
-  geom_point() + 
+  geom_point(color = "dark green") + 
   geom_smooth(method="lm") + 
   geom_text(aes(label = County.Name), 
-             check_overlap = T, nudge_y = .15
+             check_overlap = T, nudge_y = .15, #color = "orange"
              ) +
   labs(y="ACT", x="AGI Per Return")
 
@@ -380,7 +397,8 @@ new_final <- final %>%
 new_final %<>% mutate(act = round(act, 1))
 
 
-act_counties <- ggplot(final, aes(x = long, y = lat, group = group, fill=-1*ppe)) +
+act_counties <- ggplot(final, aes(x = long, y = lat, group = group, 
+                                  fill=-1*ppe)) +
   geom_polygon(color = "white") +
   labs(title = "Choropleth of PPE by County w/ ACT") + 
   geom_text(aes( label=act, x=long, y=lat), data = new_final, 
@@ -393,5 +411,5 @@ act_counties <- ggplot(final, aes(x = long, y = lat, group = group, fill=-1*ppe)
 #------------------------------------------------------------------------
 #Exporting plots
 save(agi_by_county, act_agi_irs, act_counties, final_corr, act, ppe, ppe_over_exp, ppe_over_agi, corr_matrix, 
-     agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro1, combo_chloro2, 
+     agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro1, combo_chloro2, combo_chloro3,
      file = "final-graphs-p.Rda")

@@ -72,7 +72,7 @@ plot(combo_chloro1)
 ```
 
 ### Using this data we can represent each county's Adjusted Gross Income (AGI) as shades of blue.  
-  We achieve this by averaging the AGI of of each zip code within a County. 
+  We achieve this by adding up the AGI of of each zip code within a County. 
 ```{r combo_chloro2, echo = F, fig.width=20, fig.height=17}
 plot(combo_chloro2)
 ```
@@ -82,6 +82,13 @@ plot(combo_chloro2)
 We avhieve this in a similar fashion by averaqging each districts's ACT-composite score within each County.  
 
 #### We can see that the "richest" counties do not necessarily have the highest ACT scores. 
+
+```{r combo_chloro3, echo=F, fig.width=20, fig.height=17}
+plot(combo_chloro3)
+```
+
+#### In fact, even when we adjust the color to look at Per-Pupil Expenditure We notice interesting variation.
+
 ```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
 plot(act_counties)
 ```
@@ -94,7 +101,7 @@ plot(act_counties)
 * Maybe some poor counties have fewer students
     + *So, maybe each student actually gets more dollars for their education*
 
-### Drilling down to the granularity of each county's academic-subject perfomance shows too much variation to be obviously helpful.
+### Drilling down to the granularity of each county's academic-subject perfomance shows too much variation to be obviously conclusive
 
 #### School Subjects of the Top 5 Vs. Bottom 5 AGI Per Return
 * To visualize the academic performances of students in wealthier counties, we compared the grade averages of students in the five counties with the highest AGI per tax return against those of the five counties with the lowest AGI per return.
@@ -144,7 +151,7 @@ plot(corr_matrix)
 
 ##### It may be suprising that economically disadvantaged counties have worse ACT scores, but that counties with high AGI do not necessarily have better ACT scores. But that's because it really depends how you measure the money. 
 
-* *We could calculate what percentage of a County's Income that each student gets (but that's going to be a very small percent).*
+* *We could calculate what percentage of a County's Income each student gets (but that's going to be a very small percent).*
 ```{r ppe_over_agi, echo=FALSE,fig.width=14, fig.height=3}
 plot(ppe_over_agi)
 ```
@@ -160,7 +167,6 @@ plot(ppe)
 ```
 
 * *And Compare them to each county's ACT score*
-
 ```{r act, echo=FALSE,fig.width=14, fig.height=3}
 plot(act)
 ```
@@ -177,16 +183,21 @@ plot(agi_county_prc)
 ```
 
 
-## Household Wealth And The ACT 
-### County AGI Per Return Impact on ACT Performance
+## Household Wealth And The ACT  
+
+### County AGI Per Return Impact on ACT Performance  
+
  Having heard the rumors of wealthier students performing better on standardized tests, we wanted to put this to the test. In taking the average AGI per return, we had a reasonable idea of the wealth of each household in each county. The plotting of this metric against the average ACT score indicates that a moderately strong correlation exists between the two. In other words, the data suggests that the students in counties with wealthier households tend to score higher on the ACT.
- 
+
 ```{r act_agi_per_return, echo=FALSE}
 plot(act_agi_per_return)
 ```
+
 ```{r act_agi_irs, echo=FALSE}
 plot(act_agi_irs)
 ```
+
+## We can summarize the results in a narrower correlation matrix
 
 * enr -> county_enrollment
 * exp -> county_expenditure
