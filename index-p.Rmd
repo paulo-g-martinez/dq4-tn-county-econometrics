@@ -1,6 +1,6 @@
 ---
-title: "SupWat"
-author: "supwat"
+title: "Tn Counties, Income and ACT Scores"
+author: "SupWat: Alexander, Massih, Paulo"
 date: "2/3/2018"
 output: html_document
 ---
@@ -20,7 +20,7 @@ library("GGally")
 load("final-graphs-p.Rda")
 load("data/irs_edu_13.Rda")
 ```
-![Super Kumquat ;)](presentation/supwat.png)
+![](presentation/supwat.png)
 
 #How Did **Income** Affect **Education** in Tennessee in the 2014 - 2015 Academic Year?
 ```{r agi_by_county, echo = F, fig.width=20, fig.height=17}
@@ -60,27 +60,25 @@ plot(agi_by_county)
   
 * Make the bubbles larger according to the IRS's population estimates for 2013
 
-* Make the bubbles darker according to each zipcode's Adjuste Gross Income per capita (County AGI divided by County Population). 
+* Make the bubbles darker according to each zipcode's Adjuste Gross Income per capita (zipcode AGI divided by zipcode Population). 
 
 ####  The results are a bubbles that represent the "wealth concentration" across TN.
-
-* I.E.
-    + A large light bubble represents a large population with a small AGI per capita
-    + A small dark bubble represents a small pupulation with a high AGI per capita
+* A large light bubble represents a large population with a small AGI per capita
+* A small dark bubble represents a small population with a high AGI per capita
   
 ```{r combo_chloro1, echo=FALSE, fig.width=20, fig.height=17}
 plot(combo_chloro1)
 ```
 
-### Using this data we can represent each county's Adjusted Gross Income (AGI) as shades of blue.  
+### Using this data we can represent each *county's* Adjusted Gross Income (AGI) as shades of blue.  
   We achieve this by adding up the AGI of of each zip code within a County. 
 ```{r combo_chloro2, echo = F, fig.width=20, fig.height=17}
 plot(combo_chloro2)
 ```
 
-##Here are The average ACT-composite scores for each county.  
+##Let's compare a county's AGI with its ACT composite-scores.  
 
-We avhieve this in a similar fashion by averaqging each districts's ACT-composite score within each County.  
+We achieve this by taking the weighted average of each district's ACT composite-score to obtain the county's ACT score.
 
 #### We can see that the "richest" counties do not necessarily have the highest ACT scores. 
 
@@ -88,21 +86,29 @@ We avhieve this in a similar fashion by averaqging each districts's ACT-composit
 plot(combo_chloro3)
 ```
 
-#### In fact, even when we adjust the color to look at Per-Pupil Expenditure We notice interesting variation.
-
-```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
-plot(act_counties)
-```
-
-### *But*, this could be due to multiple factors.
+### This surprising result could be explained many ways.
 
 * Maybe some rich counties have more students
     + *So, maybe each student in a rich county actually gets less dollars for their education*
         
 * Maybe some poor counties have fewer students
     + *So, maybe each student actually gets more dollars for their education*
+    
+### So, let's look at which counties spend more on each student (Per Pupil Expenditure)
+* Darker counties indicate higher per pupil expenditure
+* Bigger brighter names indicate higher ACT composite scores
+* Smaller fainter names indicate lower ACT composite scores
 
-### Drilling down to the granularity of each county's academic-subject perfomance shows too much variation to be obviously conclusive
+```{r act_counties, echo=FALSE, fig.width=20, fig.height=17}
+plot(act_counties)
+```
+
+#### Even when we adjust the color to look at Per-Pupil Expenditure We notice interesting variation.  
+
+##### How many dollars each student has spent on them does not seem to reflect an **Achievement Gap**.  
+  But notice that how much money your public school spends on each student is not the same thing as how much money each student's parents/household makes.  
+
+### Drilling down to the granularity of each district's academic-subject perfomance also shows too much variation to be obviously conclusive
 
 #### School Subjects of the Top 5 Vs. Bottom 5 AGI Per Return
 * To visualize the academic performances of students in wealthier counties, we compared the grade averages of students in the five counties with the highest AGI per tax return against those of the five counties with the lowest AGI per return.

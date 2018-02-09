@@ -10,22 +10,22 @@ library("reshape2")
 library("GGally")
 
 
-# reading in irs11, irs12, irs13, irs14, irs15
+# reading in IRS datasets: irs11, irs12, irs13, irs14, irs15
 load("data/irs.Rda")
 
 # reading in ach_profile
 ach_profile <- read.csv(file="data/achievement_profile_data_with_CORE.csv", header = TRUE)
 
-# reading in zip_code
+# reading in zip_code; to match counties to zips
 load("data/zip_code.Rda")
 
-# reading in membership
+# reading in membership: for education enrollment data
 membership <- read.csv("./data/data_2015_membership_school.csv", header = TRUE)
 #filter membership down to only highschool
 membership %<>% filter(grade %in% c(9,10,11,12), race_or_ethnicity == "All Race/Ethnic Groups", gender == "All Genders") %>% 
   rename(grade_enrollment = enrollment)
 
-# reading in crosswalk
+# reading in crosswalk; to match districts to county
 crosswalk <- read.xls("./data/data_district_to_county_crosswalk.xls", header = TRUE)
 
 # combining ach_profile, membership, crosswalk -> districts
@@ -59,20 +59,22 @@ corr <- districts %>%
             graduation=mean(Graduation, na.rm=TRUE)) %>% 
   mutate(dist_expenditure = per_pupil_exp*enrollment)
 
-
-
-load("data/irs_edu_13.Rda") #enhancement: there seems to be a few AGI values without corresponding county names
+load("data/irs_edu_13.Rda")
 
 #Scatter Plot of County AGI vs ACT composite
 act_agi_irs <- ggplot(irs_edu_13, aes(x=adjusted_gross_income, y=ACT_Composite, na.rm = T))+
                   geom_point(color = "green", alpha = 0.5) + 
                   geom_smooth(method = "lm") +
-                  geom_text(aes(label = row.names(irs_edu_13), angle = 0), nudge_y = .2, check_overlap = T) +
+                  geom_text(aes(label = row.names(irs_edu_13), angle = 0), nudge_y = .2, check_overlap = T
+                            ) +
+                  geom_line(aes(x = 1*10^8.5), color = "red", alpha = .75) +
+                  geom_line(aes(x = 1*10^9.5), color = "red", alpha = .75) +
                   #scale_y_log10() + 
                   scale_x_log10() + 
-                  labs(x="AGI", y="ACT", 
+                  labs(x="County AGI", y="County ACT", 
                        title = "Scatter Plot of County ACT Composite as a Function of County AGI")
 
+#shortening names for correlation matrix
 irs_edu_13 <- irs_edu_13[,-c(2:12)]
 irs_edu_13 <- irs_edu_13[,-c(5:15)]
 col_names <- c(
@@ -106,7 +108,7 @@ plot(corr_matrix)
 
 # CHLOROPLETH OF AGI BY COUNTY
 
-# reading in county plot points for map
+# reading and subset county plot points for map
 county_df = map_data("county")
 county_df <- county_df[(county_df["region"] == "tennessee"),]
 
@@ -123,7 +125,7 @@ chloropleth <- join(county_df, irs13_counties, by="county")
 # rbPal <- colorRampPalette(c('light blue', 'dark blue'))
 chloropleth$Cnty_AGI <- -1*log10(chloropleth$agi) / log10(24046456000)
 
-# Create the getmode function. (because R is dumb)
+# Create the getmode function.
 getmode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
@@ -143,7 +145,7 @@ combo_chloro1 <- ggplot(chloropleth, aes(long, lat, group = group,
                                         #fill=Cnty_AGI
                                         )) +
   geom_polygon(color = "white") +
-  labs(title = "Choropleth of AGI by County", subtitle = "County AGI shade of blue scaled logarithmically; darker indicates higher AGI") + 
+  labs(title = "Bubble plot of Zipcode AGI per capita") + 
   geom_point(data = irs13_zip_plotable, aes(longitude, latitude, alpha = agi/zip_pop, size = zip_pop), 
              inherit.aes = F, color = "green") +
   coord_fixed(ratio = 1/1)
@@ -156,24 +158,13 @@ combo_chloro2 <- ggplot(chloropleth, aes(long, lat, group = group,
              inherit.aes = F, color = "green") +
   coord_fixed(ratio = 1/1)
 
-combo_chloro3 <- ggplot(chloropleth, aes(long, lat, group = group, 
-                                         fill=Cnty_AGI)) +
-  geom_polygon(color = "white") +
-  labs(title = "Choropleth of AGI by County with ACT Scores", subtitle = "County AGI shade of blue scaled logarithmically; darker indicates higher AGI") +
-  geom_text(aes( label=act, x=long, y=lat), data = new_final,
-            inherit.aes = F, size = 4.5, color='orange', check_overlap = T) +
-  #geom_text(aes(label = County.Name, x = long, y = lat
-   #             , size = act, alpha = act
-    #            ),
-     #       nudge_y = -.08,  data = new_final, inherit.aes = F, color = "yellow", 
-      #      check_overlap = T) +
-  coord_fixed(ratio = 1/1)
-
 # TN Counties
 agi_by_county <- ggplot(chloropleth, aes(long, lat, group = group, 
                                          #fill="Cnty_AGI"
                                          )) +
-  geom_polygon(color = "white") +
+  geom_polygon(color = "white") + 
+  theme(line = element_blank(), rect = element_blank(), axis.title = element_blank(), axis.text = element_blank()
+        ) + #reomve grid and axis and ticks
   coord_fixed(ratio = 1/1)
 
 # ---------------------------------------------------------------
@@ -208,14 +199,13 @@ prc_agi_ed %<>%
             total_returns = mean(num_returns, na.rm = TRUE))
 
 
-
 # calculating percentage of county expenditure to county agi
 prc_agi_ed$agi_prc <- prc_agi_ed$total_expenditures / prc_agi_ed$agi
 
 # calculating total spent on school
 total_tn_school_expenditure <- sum(prc_agi_ed$total_expenditures)
 
-# calculating county's expenditure as percentage of total
+# calculating county's expenditure as percentage of state total
 prc_agi_ed$county_prc <- prc_agi_ed$total_expenditures / total_tn_school_expenditure
 
 # calculating average agi per return
@@ -227,11 +217,9 @@ agi_county_prc <- ggplot(prc_agi_ed, aes(y=county_prc, x=agi_prc, label=County.N
             hjust=-0.2, vjust=0, size=3) +
   labs(y="County Ed Exp As % of State Exp", 
        x="County Education Expenditure As % of County AGI")
-
 #  annotate(geom = "text", x = prc_agi_ed$agi_prc, y = prc_agi_ed$county_prc, label=prc_agi_ed$County.Name, size = 2) +
 
 # CHLOROPLETH AGI PER RETURN
-
 colnames(county_df)[colnames(county_df)=="county"] <- "County.Name"
 
 # joining for map chloropleth
@@ -298,7 +286,9 @@ act_agi_per_return <- ggplot(hs_irs_no_outliers, aes(y=act_comp, x=agi_per_retur
   geom_text(aes(label = County.Name), 
              check_overlap = T, nudge_y = .15, #color = "orange"
              ) +
-  labs(y="ACT", x="AGI Per Return")
+  geom_line(aes(x = 40000), color = "red", alpha = .75) +
+  geom_line(aes(x = 50000), color = "red", alpha = .75) +
+  labs(y="County ACT", x="County AGI Per Return")
 
 hs <- melt(hs_irs, id.vars=c("County.Name", "agi", "act_comp", "total_returns", "agi_per_return", "per_pupil"))
 
@@ -338,12 +328,15 @@ final <- districts %>%
   select("system", "Per_Pupil_Expenditures", "ACT_Composite", "Enrollment", "County.Name")
 
 final$system_exp <- final$Per_Pupil_Expenditures * final$Enrollment
+final$act_brute <- final$ACT_Composite * final$Enrollment
+final$act_enrollment <- final$Enrollment * final$ACT_Composite/final$ACT_Composite
 
 final %<>%
   group_by(County.Name) %>% 
   summarise(enr=sum(Enrollment, na.rm = TRUE),
             exp=sum(system_exp, na.rm = TRUE),
-            act=mean(ACT_Composite, na.rm = TRUE))
+            act_unweighted = mean(ACT_Composite, na.rm = TRUE), # ERROR: need weighted mean of act
+            act = mean(sum(act_brute, na.rm = T)/sum(Enrollment, na.rm = T))) #this should serve as a weighted mean
 
 final$ppe <- final$exp / final$enr
 
@@ -355,6 +348,8 @@ final <- merge(final, irs13_counties, by.x="County.Name", by.y="county")
 final$ppe_agi <- final$ppe / final$agi
 
 final$ppe_exp <- final$ppe / final$exp
+final %<>%
+  select(-act_unweighted)
 
 bar_plots <- arrange(final, desc(act))
 bar_plots$County.Name <- factor(bar_plots$County.Name, levels=bar_plots$County.Name)
@@ -381,7 +376,8 @@ act <- ggplot(bar_plots, aes(x=County.Name, y=act)) +
   theme(axis.text.x = element_text(angle=90, hjust=1)) +
   labs(x='County', y='ACT')
 
-final_corr <- ggcorr(final, geom = "circle", digits = 0)
+final_corr <- #final %>% dplyr::select()
+  ggcorr(final, geom = "circle", digits = 0)
 
 
 final <- join(final, county_df, by="County.Name")
@@ -396,6 +392,14 @@ new_final <- final %>%
 
 new_final %<>% mutate(act = round(act, 1))
 
+#Choropleths
+combo_chloro3 <- ggplot(chloropleth, aes(long, lat, group = group, 
+                                         fill=Cnty_AGI)) +
+  geom_polygon(color = "white") +
+  labs(title = "Choropleth of AGI by County with ACT Scores", subtitle = "County AGI shade of blue scaled logarithmically; darker indicates higher AGI") +
+  geom_text(aes( label=act, x=long, y=lat), data = new_final,
+            inherit.aes = F, size = 4.5, color='orange', check_overlap = T) +
+  coord_fixed(ratio = 1/1)
 
 act_counties <- ggplot(final, aes(x = long, y = lat, group = group, 
                                   fill=-1*ppe)) +
