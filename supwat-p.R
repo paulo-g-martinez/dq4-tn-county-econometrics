@@ -99,7 +99,7 @@ col_names <- c(
   'agi_q'
 )
 names(irs_edu_13) <- col_names
-corr_matrix <- ggcorr(irs_edu_13 ,geom = "circle", digits = 0, hjust=0.75, size=5) +
+corr_matrix <- ggcorr(irs_edu_13, geom = "circle", digits = 0, hjust=0.75, size=5) +
   labs(title = "Correlation Matrix of Key IRS and Education Indicators")
 plot(corr_matrix)
 
@@ -413,3 +413,7 @@ act_counties <- ggplot(final, aes(x = long, y = lat, group = group,
 save(agi_by_county, act_agi_irs, act_counties, final_corr, act, ppe, ppe_over_exp, ppe_over_agi, corr_matrix, 
      agi_county_prc, top_5_agi_facet, bot_5_agi_facet, act_agi_per_return, combo_chloro1, combo_chloro2, combo_chloro3,
      file = "final-graphs-p.Rda")
+
+save(irs_edu_13, chloropleth, bar_plots, final, top_5_agi, bot_5_agi, hs_irs_no_outliers, prc_agi_ed, new_final, act_counties, file="dataframes.Rda")
+
+

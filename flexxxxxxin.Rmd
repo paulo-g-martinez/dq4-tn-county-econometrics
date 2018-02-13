@@ -1,0 +1,184 @@
+---
+title: "Flexxxxxxin On Em Fam"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+<style>
+
+  .navbar {
+    background-color: #ff0080;
+  }
+  body {
+    background-color: #000050;
+  }
+  .chart-wrapper, #side-2-column {
+    border: 2px solid #ff0080;
+  }
+  .chart-title {
+    color: #ff0080;
+  }
+  .abbreviations {
+    font-size: 14px
+  }
+  
+  #tennessee-chloropleth-of-ppe-w-act {
+    flex: 492 0px !important;
+  }
+  
+</style>
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library("tidyverse")
+library("plyr")
+library("dplyr")
+library("magrittr")
+library("gdata")
+library("ggplot2")
+library("plotly")
+library("maps")
+library("reshape2")
+library("GGally")
+     
+load("final-graphs-p.Rda")
+load("data/irs_edu_13.Rda")
+load("dataframes.Rda")
+```
+
+
+Overview
+====================================================
+
+## Side 1 {data-width=50%}
+
+### Correlation Matrix of IRS and Education Indicators
+
+```{r}
+ggcorr(irs_edu_13, geom = "circle", digits = 0, hjust=0.75, size=3, low = "#000050",
+  mid = "#0029ff", high = "#ff0080")
+```
+
+### Tennessee Chloropleth of PPE w/ ACT
+
+
+```{r fig.width=15}
+ggplot(final, aes(x = long, y = lat, group = group,
+                                  fill=-1*ppe)) +
+  geom_polygon(color = "white") +
+  scale_color_gradient(low="#000050", high="#ff0080") +
+  geom_text(aes( label=act, x=long, y=lat), data = new_final, 
+            inherit.aes = F, size = 3.5, color='#ff0080', check_overlap = T) +
+  #geom_point
+  coord_fixed(ratio = 1/1)
+```
+
+## Side 2 {data-width=50%}
+
+### Correlation Highlights
+
+In the middle of the diagonal you can find "ACT" and in the bottom left you can find "agi" the correaltion matrix shows that there is actually not a very strong positive correlation between Adjusted Gross Icome (AGI) and ACT scores, but there is a strong negative correlation between ACT scores and the percentage of economically disadvantaged students in a county.
+
+It may be suprising that economically disadvantaged counties have worse ACT scores, but that counties with high AGI do not necessarily have better ACT scores. But that's because it really depends how you measure the money. 
+
+
+### Chloropleth Highlights
+
+It appears that a county's expenditure per student does not necessarily result in higher ACT scores. For instance, the counties that house Nashville and Memphis have a high expenditure per student even though their ACT scores are low in comparison to surrounding counties that have a low expenditure. 
+
+A possible explanation for this observation is that county's with a higher expenditure per student tend to be more crowded. This could possibly result in students having less one-on-one time with teachers.
+
+
+Education & AGI
+=======================================================================
+
+## Side 1 Column {data-width=35%}
+
+### PPE / AGI
+
+```{r, fig.width=12}
+ggplot(bar_plots, aes(x=County.Name, y=ppe_agi)) +
+  geom_col(fill='#000050') +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(x="County", y="PPE / AGI")
+```
+
+### PPE / County Expenditure
+
+```{r, fig.width=12}
+ggplot(bar_plots, aes(x=County.Name, y=ppe_exp)) +
+  geom_col(fill='#ff0080') +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(x="County", y="PPE / County Exp")
+```
+
+### PPE
+
+```{r, fig.width=12}
+ggplot(bar_plots, aes(x=County.Name, y=ppe)) +
+  geom_col(fill='#0029ff') +
+  coord_cartesian(ylim=c(7000,12000)) +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(x="County", y="PPE")
+```
+
+### ACT Composite
+
+```{r, fig.width=12}
+ggplot(bar_plots, aes(x=County.Name, y=act)) +
+  geom_col(fill='#000000') +
+  coord_cartesian(ylim=c(16,24)) +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(x='County', y='ACT')
+```
+
+## Side 2 Column {data-width=65%, .tabset}
+
+### AGI/Return & ACT
+
+```{r}
+ggplot(hs_irs_no_outliers, aes(y=act_comp, x=agi_per_return)) +
+  geom_point(color = "#ff0080") + 
+  geom_smooth(method="lm") + 
+  geom_text(aes(label = County.Name), 
+             check_overlap = T, nudge_y = .15, size=3) +
+  labs(y="ACT", x="AGI Per Return")
+```
+
+### County Spend vs. AGI & TN Total
+
+```{r}
+ggplot(prc_agi_ed, aes(y=county_prc, x=agi_prc, label=County.Name)) + 
+  geom_point(color = "#ff0080") +
+  geom_text(aes(label=ifelse(county_prc>0.03|(agi_prc>0.13&county_prc<0.001), as.character(County.Name), "")), 
+            hjust=-0.2, vjust=0, size=2) +
+  labs(y="County Ed Exp As % of State Exp", 
+       x="County Education Expenditure As % of County AGI")
+```
+
+### Top 5 AGI / Return Academics
+
+```{r}
+ggplot(top_5_agi, aes(y=value, x=variable)) +
+  geom_bar(stat="identity", fill = "#ff0080", alpha = .5) + 
+  ylim(0, 100) +
+  facet_grid(.~county) +
+  #facet_wrap(~county, scales="free_x") +
+  theme(axis.text.x = element_text(angle=60, hjust=1, size=6)) +
+  labs(x="Subject", y="Proficiency Rate")
+```
+
+### Bottom 5 AGI / Return Academics
+
+```{r}
+ggplot(bot_5_agi, aes(y=value, x=variable)) +
+  geom_bar(stat="identity", fill = "#ff0080", alpha = .5) + 
+  ylim(0, 100) +
+  #facet_wrap(~county, scales="free_x") +
+  facet_grid(.~county) +
+  theme(axis.text.x = element_text(angle=60, hjust=1, size=6)) +
+  labs(x="Subject", y="Proficiency Rate")
+```
+
