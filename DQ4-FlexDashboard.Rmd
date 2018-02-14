@@ -4,35 +4,65 @@ author: "Paulo G Martinez"
 date: "Feb. 8, 2018"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    orientation: rows
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+
+library("tidyverse")
+library("plyr")
+library("dplyr")
+library("magrittr")
+library("gdata")
+library("ggplot2")
+library("plotly")
+library("maps")
+library("reshape2")
+library("GGally")
+     
+load("final-graphs-p.Rda")
+load("data/irs_edu_13.Rda")
 ```
 
-Column {data-width=650}
+Row {data-height=300}
 -----------------------------------------------------------------------
 
-### Chart A
+### **ACT's National "Achievement Gap" as a line plot.**
+![ACT by Family Income](presentation/act_lineplot.png)
 
-```{r}
+### **What is the "ACT Achievement Gap?"**
+  In 2016 ACT [reported](http://www.act.org/content/dam/act/unsecured/documents/R1604-ACT-Composite-Score-by-Family-Income.pdf) that **students, from families with an annual income of \$80,000 or more tend to score about four (4) points higher** than students in families that earn less than \$80,000 a year. 
 
-```
+*It's kindof a big deal*
 
-Column {data-width=350}
+[According to the U.S. Bureau of Labor Statistics](https://www.bls.gov/opub/ted/2016/weekly-earnings-by-educational-attainment-in-first-quarter-2016.htm) for 2016 just *going* to college boosted the average U.S. full-time worker's median **income from $679/week** to $782.
+And *graduating with a bachelor's* boosted that up **to $1,155/week.** a difference of:
+
+* $3,000/month vs $5,000/month
+* **$36,000/year vs $60,000/year!** between holding a highschool diploma and bachelor's degree.
+
+
+In 2013 the national average ACT composite score was 20.9. 
+
+* With standardized-test scores like the SAT and **ACT** being a major (if not the primary) criteria for college admission in the US, **a four (4) point difference is a big difference!**
+
+In 2014 similar results were [reported by the Huffington Post](https://www.huffingtonpost.com/2014/07/18/act-score-family-income_n_5600065.html) and [by the Washington Post](https://www.washingtonpost.com/news/wonk/wp/2014/03/05/these-four-charts-show-how-the-sat-favors-the-rich-educated-families/?utm_term=.56cc245120db) about the ACT and the SAT respectively. And in September 2017, the Washington Post reported that the **Achievement Gap** has, if anything, *worsened* for the ACT: [*‘We didn’t know it was this bad’: New ACT scores show huge achievement gaps*.](https://www.washingtonpost.com/local/education/we-didnt-know-it-was-this-bad-new-act-scores-show-huge-achievement-gaps/2017/09/06/c6397f36-9279-11e7-aace-04b862b2b3f3_story.html?utm_term=.f50e950bb198)
+
+Row {data-height=700}
 -----------------------------------------------------------------------
 
-### Chart B
+### Correlation of a County's: AGIncome per Household vs ACT Composite
+Notice that counties the ACT score distribution for each Income Segment.  
 
-```{r}
+* Counties with "wealthier" household-income score no lower than 18.5 on the ACT.  
 
+* Counties with "poorer" household-income score no higher than 19.5. (With the exception of trousdale which is on the "wealthier end of the poorest segment.") 
+```{r act_agi_per_return, echo=FALSE}
+plot(act_agi_per_return)
 ```
 
-### Chart C
-
-```{r}
-
+### Correlation Matrix with tabs for each county
+```{r final_corr, echo=FALSE}
+plot(final_corr)
 ```
-

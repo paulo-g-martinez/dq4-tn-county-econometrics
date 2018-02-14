@@ -1,0 +1,172 @@
+---
+title: "MOSAIC Study Progress"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: cosmo
+---
+
+<style>                     
+.navbar {
+  background-color:#003D79;
+  border-color:white;
+}
+.navbar-brand {
+color:white!important;
+}
+</style>   
+
+<style type="text/css">
+
+.chart-title {  /* chart_title  */
+   font-size: 15px
+
+</style>
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(plotly)
+library(highcharter)
+library(treemap)
+library(knitr)
+library(devtools)
+
+```
+
+Screening & Enrollment
+=====================================
+
+Column {data-width=700}
+-----------------------------------------------------------------------
+
+### Patients Screened, Approached, and Enrolled
+
+```{r}
+
+```
+
+### Study Exclusions (% of All Patients Excluded)
+
+```{r}
+
+```
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+
+### Cumulative Enrollment as of {data-height=250}
+
+```{r}
+
+```
+
+### Approach & Refusal {data-height=250}
+
+
+### Cumulative Exclusions {data-height=500}
+
+```{r}
+
+```
+
+In-Hospital
+=====================================
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Pre-Hospital Questionnaires {data-height=40}
+
+### Prehospital Surrogate Battery Completion Rate
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+### Prehospital Caregiver Battery Completion Rate
+
+```{r}
+
+```
+
+### Specimen Log Compliance (% of Patients Eligible)
+
+```{r}
+
+```
+
+### Current In-Hospital Status
+
+```{r}
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+### **Accelerometer Central** {data-height=40}
+
+### Accelerometer Snapshot: Patient-Days
+
+```{r}
+```
+
+### Accelerometer Snapshot: Patients
+
+```{r}
+
+```
+
+### On Days Accelerometer Was Removed, How Many Times?
+
+```{r}
+
+```
+
+### Reasons for Accelerometer Removal
+
+```{r}
+
+```
+
+Follow-Up
+=====================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
+Study & Technical Info
+=====================================
+
+MOSAIC is funded by the National Institutes of Health. Please see our listing on [clinicaltrials.gov](https://clinicaltrials.gov/ct2/show/NCT03115840).
+
+This dashboard uses. Packages:
+
+```{r}
+
+```
